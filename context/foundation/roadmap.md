@@ -3,7 +3,7 @@ project: 10xCards
 version: 1
 status: draft
 created: 2026-06-07
-updated: 2026-06-07
+updated: 2026-06-09
 prd_version: 2
 main_goal: speed
 top_blocker: time
@@ -29,7 +29,7 @@ top_blocker: time
 
 | ID   | Change ID              | Outcome (user can …)                                                                                       | Prerequisites | PRD refs                                               | Status   |
 | ---- | ---------------------- | ---------------------------------------------------------------------------------------------------------- | ------------- | ------------------------------------------------------ | -------- |
-| F-01 | db-schema-mvp          | (foundation) tabela cards zaktualizowana; tabela generations dodana; RLS kompletne                         | —             | FR-014, FR-018, FR-019, FR-028                         | ready    |
+| F-01 | db-schema-mvp          | (foundation) tabela cards zaktualizowana; tabela generations dodana; RLS kompletne                         | —             | FR-014, FR-018, FR-019, FR-028                         | done     |
 | F-02 | google-oauth-switch    | (foundation) logowanie przez Google OAuth działa; email+password usunięte                                  | —             | FR-001, FR-002, FR-003                                 | ready    |
 | S-01 | first-gated-generation | wkleić tekst → wygenerować 5 kart AI → przejrzeć/edytować/odrzucić → zatwierdzić → karty zapisane w bazie | F-01, F-02    | US-01, US-04, US-05, US-09, FR-001–FR-003, FR-006–FR-014, FR-027 | proposed |
 | S-02 | srs-review-session     | przejść sesję powtórki: pytanie → odpowiedź → [Wiem/Nie wiem] → podsumowanie                               | S-01          | US-06, US-08, FR-015–FR-022                            | proposed |
@@ -70,7 +70,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Zmiana nazw pól (`front`→`question`, `back`→`answer`) zepsuje istniejące zapytania w `api/cards.ts` — bezpieczne w MVP (brak produkcyjnych userów z danymi do zachowania), ale wymaga synchronizacji migracji z deploymentem zaktualizowanego kodu API; cały downstream zależy od poprawności tego schematu.
-- **Status:** ready
+- **Status:** done
 
 ### F-02: Google OAuth switch
 
@@ -173,4 +173,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ## Done
 
-(Wypełnia `/10x-archive` gdy change odpowiadający roadmap ID zostanie zarchiwizowany.)
+- **F-01: (foundation) tabela cards zaktualizowana; tabela generations dodana; RLS kompletne** — Archived 2026-06-09 → `context/archive/2026-06-09-db-schema-mvp/`. Lesson: —.
