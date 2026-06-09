@@ -1,0 +1,44 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import CardsSection from "@/components/cards/CardsSection";
+import { createClient } from "@/lib/supabase";
+import type { Card } from "@/types";
+
+const { user } = Astro.locals;
+
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+let initialCards: Card[] = [];
+if (supabase) {
+  const { data } = await supabase.from("cards").select().order("created_at", { ascending: false });
+  initialCards = (data as Card[]) ?? [];
+}
+---
+
+<Layout title="Dashboard">
+  <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
+    <div class="w-full max-w-md space-y-6">
+      <div class="rounded-2xl border border-white/10 bg-white/10 p-8 text-white backdrop-blur-xl">
+        <div class="mb-6 flex items-center justify-between">
+          <div>
+            <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-2xl font-bold text-transparent">
+              Dashboard
+            </h1>
+            <p class="mt-1 text-sm text-blue-100/60">{user?.email}</p>
+          </div>
+          <form method="POST" action="/api/auth/signout">
+            <button
+              type="submit"
+              class="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-sm transition-colors hover:bg-white/20"
+            >
+              Sign out
+            </button>
+          </form>
+        </div>
+
+        <div class="border-t border-white/10 pt-6">
+          <CardsSection initialCards={initialCards} client:load />
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
