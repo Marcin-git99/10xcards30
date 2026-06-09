@@ -198,11 +198,11 @@ Destructive rename of `front`/`back`; safe because no production data exists (ro
 
 #### Automated
 
-- [x] 2.1 Type check passes (`npm run check`)
-- [x] 2.2 Build passes (`npm run build`)
-- [x] 2.3 Lint passes (`npm run lint`) — descoped: F-01 code clean (check+build ✓); pre-existing repo-wide CRLF + scaffold lint debt deferred to a separate change
+- [x] 2.1 Type check passes (`npm run check`) — 8b801db
+- [x] 2.2 Build passes (`npm run build`) — 8b801db
+- [x] 2.3 Lint passes (`npm run lint`) — descoped: F-01 code clean (check+build ✓); pre-existing repo-wide CRLF + scaffold lint debt deferred to a separate change — 8b801db
 
 #### Manual
 
-- [x] 2.4 `POST /api/cards` creates a row with `source='manual'`, `leitner_box=1`, `next_review_at` set
-- [x] 2.5 End-to-end via UI: create form saves a card and dashboard renders its question/answer (not `undefined`)
+- [x] 2.4 `POST /api/cards` creates a row with `source='manual'`, `leitner_box=1`, `next_review_at` set — 8b801db
+- [x] 2.5 End-to-end via UI: create form saves a card and dashboard renders its question/answer (not `undefined`) — 8b801db

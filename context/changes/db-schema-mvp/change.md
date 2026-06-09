@@ -1,7 +1,7 @@
 ---
 change_id: db-schema-mvp
 title: Migrate cards schema to PRD model and add generations table
-status: implementing
+status: implemented
 created: 2026-06-09
 updated: 2026-06-09
 archived_at: null
