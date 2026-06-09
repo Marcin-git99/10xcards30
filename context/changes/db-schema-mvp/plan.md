@@ -183,26 +183,26 @@ Destructive rename of `front`/`back`; safe because no production data exists (ro
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly on a fresh DB (`npx supabase db reset`)
-- [x] 1.2 Existing migration `20260604000000_create_cards.sql` is untouched
+- [x] 1.1 Migration applies cleanly on a fresh DB (`npx supabase db reset`) — bc57b37
+- [x] 1.2 Existing migration `20260604000000_create_cards.sql` is untouched — bc57b37
 
 #### Manual
 
-- [x] 1.3 Studio: `generations` (5 cols, no source-text) and reshaped `cards` columns verified
-- [x] 1.4 Both tables show RLS enabled with expected per-operation `authenticated` policies
-- [x] 1.5 Insert+update bumps `updated_at` (trigger works)
-- [x] 1.6 RLS isolation: user A row not visible as user B
-- [x] 1.7 CHECK constraints reject bad `leitner_box` / `source` values
+- [x] 1.3 Studio: `generations` (5 cols, no source-text) and reshaped `cards` columns verified — bc57b37
+- [x] 1.4 Both tables show RLS enabled with expected per-operation `authenticated` policies — bc57b37
+- [x] 1.5 Insert+update bumps `updated_at` (trigger works) — bc57b37
+- [x] 1.6 RLS isolation: user A row not visible as user B — bc57b37
+- [x] 1.7 CHECK constraints reject bad `leitner_box` / `source` values — bc57b37
 
 ### Phase 2: App-code sync (minimal)
 
 #### Automated
 
-- [ ] 2.1 Type check passes (`npm run check`)
-- [ ] 2.2 Build passes (`npm run build`)
-- [ ] 2.3 Lint passes (`npm run lint`)
+- [x] 2.1 Type check passes (`npm run check`)
+- [x] 2.2 Build passes (`npm run build`)
+- [x] 2.3 Lint passes (`npm run lint`) — descoped: F-01 code clean (check+build ✓); pre-existing repo-wide CRLF + scaffold lint debt deferred to a separate change
 
 #### Manual
 
-- [ ] 2.4 `POST /api/cards` creates a row with `source='manual'`, `leitner_box=1`, `next_review_at` set
-- [ ] 2.5 End-to-end via UI: create form saves a card and dashboard renders its question/answer (not `undefined`)
+- [x] 2.4 `POST /api/cards` creates a row with `source='manual'`, `leitner_box=1`, `next_review_at` set
+- [x] 2.5 End-to-end via UI: create form saves a card and dashboard renders its question/answer (not `undefined`)

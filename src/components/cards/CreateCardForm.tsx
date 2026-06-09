@@ -9,16 +9,16 @@ interface Props {
 }
 
 export default function CreateCardForm({ onCardAdded }: Props) {
-  const [front, setFront] = useState("");
-  const [back, setBack] = useState("");
-  const [errors, setErrors] = useState<{ front?: string; back?: string; server?: string }>({});
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+  const [errors, setErrors] = useState<{ question?: string; answer?: string; server?: string }>({});
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   function validate() {
     const next: typeof errors = {};
-    if (!front.trim()) next.front = "Front cannot be empty";
-    if (!back.trim()) next.back = "Back cannot be empty";
+    if (!question.trim()) next.question = "Question cannot be empty";
+    if (!answer.trim()) next.answer = "Answer cannot be empty";
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -35,14 +35,14 @@ export default function CreateCardForm({ onCardAdded }: Props) {
       const res = await fetch("/api/cards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ front: front.trim(), back: back.trim() }),
+        body: JSON.stringify({ question: question.trim(), answer: answer.trim() }),
       });
 
       if (res.ok) {
         const card: Card = await res.json();
         onCardAdded?.(card);
-        setFront("");
-        setBack("");
+        setQuestion("");
+        setAnswer("");
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);
       } else {
@@ -59,28 +59,28 @@ export default function CreateCardForm({ onCardAdded }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <FormField
-        id="front"
-        label="Front"
-        value={front}
+        id="question"
+        label="Question"
+        value={question}
         onChange={(v) => {
-          setFront(v);
-          if (errors.front) setErrors((p) => ({ ...p, front: undefined }));
+          setQuestion(v);
+          if (errors.question) setErrors((p) => ({ ...p, question: undefined }));
         }}
         placeholder="Question or term…"
-        error={errors.front}
+        error={errors.question}
         icon={<BookOpen className="size-4" />}
       />
 
       <FormField
-        id="back"
-        label="Back"
-        value={back}
+        id="answer"
+        label="Answer"
+        value={answer}
         onChange={(v) => {
-          setBack(v);
-          if (errors.back) setErrors((p) => ({ ...p, back: undefined }));
+          setAnswer(v);
+          if (errors.answer) setErrors((p) => ({ ...p, answer: undefined }));
         }}
         placeholder="Answer or definition…"
-        error={errors.back}
+        error={errors.answer}
         icon={<AlignLeft className="size-4" />}
       />
 

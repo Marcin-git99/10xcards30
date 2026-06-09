@@ -36,8 +36,8 @@ export default function CardsSection({ initialCards }: Props) {
                 key={card.id}
                 className="rounded-xl border border-white/10 bg-white/5 p-4 text-white"
               >
-                <p className="font-medium">{card.front}</p>
-                <p className="mt-1 text-sm text-blue-100/60">{card.back}</p>
+                <p className="font-medium">{card.question}</p>
+                <p className="mt-1 text-sm text-blue-100/60">{card.answer}</p>
               </li>
             ))}
           </ul>

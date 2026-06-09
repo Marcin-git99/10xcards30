@@ -5,10 +5,9 @@ import type { Card } from "@/types";
 
 export const prerender = false;
 
-// TODO: implement the validation schema below
 const createCardSchema = z.object({
-  front: z.string().trim().min(1, "Front cannot be empty").max(500),
-  back: z.string().trim().min(1, "Back cannot be empty").max(500),
+  question: z.string().trim().min(1, "Question cannot be empty").max(500),
+  answer: z.string().trim().min(1, "Answer cannot be empty").max(500),
 });
 
 export const POST: APIRoute = async (context) => {
