@@ -52,7 +52,8 @@ export const POST: APIRoute = async (context) => {
     .single<Card>();
 
   if (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("Failed to create card:", error);
+    return new Response(JSON.stringify({ error: "Failed to create card" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });

@@ -47,7 +47,7 @@ export default function CreateCardForm({ onCardAdded }: Props) {
         setTimeout(() => setSuccess(false), 3000);
       } else {
         const data = await res.json();
-        setErrors({ server: data.error ?? "Something went wrong" });
+        setErrors({ server: typeof data.error === "string" ? data.error : "Something went wrong" });
       }
     } catch {
       setErrors({ server: "Network error — please try again" });
