@@ -5,6 +5,7 @@ import type { Card } from "@/types";
 
 interface Props {
   initialCards: Card[];
+  loadError?: boolean;
 }
 
 function SourceBadge({ source }: { source: Card["source"] }) {
@@ -22,7 +23,7 @@ function SourceBadge({ source }: { source: Card["source"] }) {
   );
 }
 
-export default function LibraryView({ initialCards }: Props) {
+export default function LibraryView({ initialCards, loadError = false }: Props) {
   const [cards] = useState<Card[]>(initialCards);
 
   return (
@@ -47,7 +48,11 @@ export default function LibraryView({ initialCards }: Props) {
         </button>
       </div>
 
-      {cards.length === 0 ? (
+      {loadError ? (
+        <p className="rounded-xl border border-red-400/30 bg-red-500/10 p-8 text-center text-sm text-red-200">
+          Nie udało się wczytać fiszek. Odśwież stronę i spróbuj ponownie.
+        </p>
+      ) : cards.length === 0 ? (
         <p className="rounded-xl border border-white/10 bg-white/5 p-8 text-center text-sm text-blue-100/40">
           Nie masz jeszcze żadnych fiszek.
         </p>
