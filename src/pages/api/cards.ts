@@ -10,6 +10,42 @@ const createCardSchema = z.object({
   answer: z.string().trim().min(1, "Answer cannot be empty").max(500),
 });
 
+export const GET: APIRoute = async (context) => {
+  const user = context.locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const supabase = createClient(context.request.headers, context.cookies);
+  if (!supabase) {
+    return new Response(JSON.stringify({ error: "Service unavailable" }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const { data, error } = await supabase
+    .from("cards")
+    .select()
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Failed to list cards:", error);
+    return new Response(JSON.stringify({ error: "Failed to list cards" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  return new Response(JSON.stringify((data as Card[]) ?? []), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+};
+
 export const POST: APIRoute = async (context) => {
   const user = context.locals.user;
   if (!user) {
