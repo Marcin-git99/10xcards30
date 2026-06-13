@@ -156,6 +156,8 @@ Google button on landing + signin page, signed-in bounce in middleware, and dele
 
 **Contract**: `src/components/auth/` directory ends up empty (delete it); no dangling imports (build catches them).
 
+> ⚠️ **Cross-lane merge landmine (found during m2l5 parallel review):** `src/components/cards/CreateCardForm.tsx` imports `@/components/auth/FormField`, which this step deletes. Deleting `src/components/auth/` without fixing that import breaks the `/dashboard` build after S-03 (`flashcard-library`) merges. When executing this step, give `CreateCardForm.tsx` its own form-field (inline or a shared `src/components/ui/` primitive) — do not just delete.
+
 ### Success Criteria:
 
 #### Automated Verification:

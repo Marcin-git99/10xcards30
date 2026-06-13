@@ -318,12 +318,15 @@ skip_nonce_check = false
 email_optional = false
 
 [auth.external.google]
+# WARNING: with enabled=true, `supabase start` will FAIL to boot the (shared) local
+# stack until BOTH client_id (below) and the SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET
+# env var are set. Complete the Google Cloud Console setup before restarting Supabase.
 enabled = true
 # Fill from Google Cloud Console (OAuth "Web application" client ID).
 client_id = ""
 # DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead:
 secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET)"
-# If enabled, the nonce check will be skipped. Required for local sign in with Google auth.
+# Start with false; flip to true ONLY if local Google sign-in fails with a nonce error (local-only).
 skip_nonce_check = false
 
 # Allow Solana wallet holders to sign in to your project via the Sign in with Solana (SIWS, EIP-4361) standard.
