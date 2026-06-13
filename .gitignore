@@ -26,3 +26,9 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# course tooling — keep local, never publish to remote
+.claude/skills/
+.claude/prompts/
+.claude/.10x-cli-manifest.json
+.claude/settings.local.json
