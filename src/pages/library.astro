@@ -1,0 +1,31 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import LibraryView from "@/components/library/LibraryView";
+import { createClient } from "@/lib/supabase";
+import type { Card } from "@/types";
+
+// Page-level auth guard. /library is NOT yet in middleware PROTECTED_ROUTES
+// (src/middleware.ts is owned by lane A); adding it there + a Topbar nav link
+// is a documented post-merge follow-up (see plan.md "What We're NOT Doing").
+const { user } = Astro.locals;
+if (!user) {
+  return Astro.redirect("/auth/signin");
+}
+
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+let initialCards: Card[] = [];
+if (supabase) {
+  const { data } = await supabase.from("cards").select().order("created_at", { ascending: false });
+  initialCards = (data as Card[]) ?? [];
+}
+---
+
+<Layout title="Moje fiszki">
+  <div class="bg-cosmic min-h-screen p-4">
+    <div class="mx-auto w-full max-w-2xl space-y-6 py-8">
+      <div class="rounded-2xl border border-white/10 bg-white/10 p-8 backdrop-blur-xl">
+        <LibraryView initialCards={initialCards} client:load />
+      </div>
+    </div>
+  </div>
+</Layout>
