@@ -14,9 +14,17 @@ if (!user) {
 
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 let initialCards: Card[] = [];
+let loadError = false;
 if (supabase) {
-  const { data } = await supabase.from("cards").select().order("created_at", { ascending: false });
-  initialCards = (data as Card[]) ?? [];
+  const { data, error } = await supabase.from("cards").select().order("created_at", { ascending: false });
+  if (error) {
+    console.error("Failed to load cards:", error);
+    loadError = true;
+  } else {
+    initialCards = (data as Card[]) ?? [];
+  }
+} else {
+  loadError = true;
 }
 ---
 
@@ -24,7 +32,7 @@ if (supabase) {
   <div class="bg-cosmic min-h-screen p-4">
     <div class="mx-auto w-full max-w-2xl space-y-6 py-8">
       <div class="rounded-2xl border border-white/10 bg-white/10 p-8 backdrop-blur-xl">
-        <LibraryView initialCards={initialCards} client:load />
+        <LibraryView initialCards={initialCards} loadError={loadError} client:load />
       </div>
     </div>
   </div>
