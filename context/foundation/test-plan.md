@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-08-02
+> Last updated: 2026-08-02 (zmiana kolejności faz w §3)
 
 ## 1. Strategy
 
@@ -99,8 +99,8 @@ aktualizuje go w miarę pojawiania się artefaktów na dysku.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|---|---|---|---|---|---|
-| 1 | Runner + bramka wejścia | Udowodnić, że user faktycznie wchodzi do aplikacji i w niej zostaje, a osoba bez sesji nie wchodzi; postawić runner i ożywić martwe bramki CI | #1, #3 | integration, gates | change opened | `context/changes/testing-entry-gate/` |
-| 2 | Izolacja danych i brak wycieków | Udowodnić, że dane usera A są nieosiągalne dla usera B, a odpowiedzi błędu nie wypisują wnętrzności systemu | #2, #4 | integration | not started | — |
+| 1 | Runner + izolacja danych i brak wycieków | Postawić runner i ożywić martwe bramki; udowodnić, że dane usera A są nieosiągalne dla usera B, a odpowiedzi błędu nie wypisują wnętrzności systemu | #2, #4 | integration, gates | change opened | `context/changes/testing-data-isolation/` |
+| 2 | Bramka wejścia | Udowodnić, że user faktycznie wchodzi do aplikacji i w niej zostaje, a osoba bez sesji nie wchodzi | #1, #3 | integration | not started | — |
 | 3 | Kuratela paczki | Udowodnić, że biblioteka zawiera dokładnie to, co user zatwierdził — nic więcej i nic mniej | #5 | integration | not started | — |
 | 4 | Poprawność harmonogramu | Udowodnić, że drabina powtórek zachowuje się zgodnie z wymaganiami, a edycja treści karty jej nie rusza | #6 | unit, integration | not started | — |
 | 5 | Kaskada usunięcia konta | Udowodnić, że trwałe usunięcie konta nie zostawia żadnych danych | #7 | integration | not started | — |
@@ -108,12 +108,22 @@ aktualizuje go w miarę pojawiania się artefaktów na dysku.
 **Status vocabulary** (stałe literały parsera): `not started` → `change opened`
 → `researched` → `planned` → `implementing` → `complete`.
 
-Uzasadnienie kolejności. Faza 1 idzie pierwsza, bo pokrywa jedyne ryzyko
-ocenione jako Wysoki × Wysoki wynikające z wywiadu, a slice F-02 jest
-następny w roadmapie — testy powstają wtedy razem ze zmianą, nie po niej.
-Faza 2 jest jedyną, która może ruszyć natychmiast bez czekania na cokolwiek:
-dotyczy kodu i migracji obecnych dziś na gałęzi głównej. Fazy 3, 4 i 5 czekają
-na swoje slice'y (odpowiednio S-01, S-02 z S-03, S-04).
+Uzasadnienie kolejności. Faza 1 idzie pierwsza, bo jako jedyna nie jest
+zablokowana niczym: dotyczy kodu API kart i migracji obecnych dziś na gałęzi
+głównej, których nie modyfikuje żaden otwarty Pull Request. Pokrywa też
+Ryzyko 2 — jedyne z potwierdzonym precedensem w archiwum. Ponieważ rusza
+pierwsza, to ona stawia runner i ożywia bramki; bez tego żadna kolejna faza
+nie ma na czym stanąć. Faza 2 czeka na wylądowanie F-02 na gałęzi głównej,
+bo przepisuje on tę samą ścieżkę logowania, której faza ma bronić — testy
+pisane wcześniej celowałyby w kod przeznaczony do usunięcia. Fazy 3, 4 i 5
+czekają na swoje slice'y (odpowiednio S-01, S-02 z S-03, S-04).
+
+**Zmiana kolejności (2026-08-02).** Pierwotnie faza „Bramka wejścia" była
+pierwsza, zgodnie z wagą Ryzyka 1 (Wysoki × Wysoki z wywiadu). Zamieniona z
+fazą izolacji danych po ustaleniu, że wymaga wcześniejszego domknięcia F-02,
+a to z kolei wymaga ręcznej konfiguracji dostawcy logowania poza
+repozytorium. Priorytet Ryzyka 1 w §2 pozostaje bez zmian — zmieniła się
+kolejność dostawy, nie ocena ryzyka.
 
 ## 4. Stack
 
@@ -166,7 +176,7 @@ znaczyć:
    (2026-08-02): Phase 1 wchłania ten dług** — bramka i pierwsze testy lądują
    razem, bo osobno żadne z nich nie domyka kryterium sukcesu. Zmianę
    `lint-debt-cleanup` należy zamknąć jako wchłoniętą przez
-   `testing-entry-gate`.
+   `testing-data-isolation`.
 
 ## 6. Cookbook Patterns
 
@@ -175,19 +185,19 @@ gdy odpowiednia faza rolloutu wyląduje; wcześniej zawiera odsyłacz do fazy.
 
 ### 6.1 Dodanie testu integracyjnego ścieżki logowania i dostępu
 
-TBD — patrz §3 Phase 1. Wzorzec ma pokrywać scenariusz „user przechodzi
+TBD — patrz §3 Phase 2. Wzorzec ma pokrywać scenariusz „user przechodzi
 logowanie i pozostaje w aplikacji po odświeżeniu" (Ryzyko 1) oraz „żądanie
 bez sesji nie otrzymuje treści chronionej" (Ryzyko 3).
 
 ### 6.2 Dodanie testu izolacji danych między userami
 
-TBD — patrz §3 Phase 2. Wzorzec ma pokrywać scenariusz „user A nie dosięga
+TBD — patrz §3 Phase 1. Wzorzec ma pokrywać scenariusz „user A nie dosięga
 zasobu usera B, również przy podmianie identyfikatora" (Ryzyko 4), wraz z
 przepisem na zestawienie dwóch tożsamości w jednym teście.
 
 ### 6.3 Dodanie testu na ścieżkę błędu API
 
-TBD — patrz §3 Phase 2. Wzorzec ma pokrywać scenariusz „odpowiedź błędu nie
+TBD — patrz §3 Phase 1. Wzorzec ma pokrywać scenariusz „odpowiedź błędu nie
 ujawnia wnętrzności systemu" (Ryzyko 2).
 
 ### 6.4 Dodanie testu jednostkowego reguły biznesowej
@@ -198,7 +208,7 @@ nie z testowanej implementacji.
 
 ### 6.5 Dodanie testu dla nowego endpointu API
 
-TBD — patrz §3 Phase 2. Wzorzec ma opisać domyślną warstwę, politykę
+TBD — patrz §3 Phase 1. Wzorzec ma opisać domyślną warstwę, politykę
 mockowania i sposób asercji na skutki uboczne, a nie tylko na kształt
 odpowiedzi.
 
