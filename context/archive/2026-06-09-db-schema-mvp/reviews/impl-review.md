@@ -1,4 +1,5 @@
 <!-- IMPL-REVIEW-REPORT -->
+
 # Implementation Review: DB Schema Migration to PRD Model (F-01)
 
 - **Plan**: context/changes/db-schema-mvp/plan.md
@@ -10,14 +11,14 @@
 
 ## Verdicts
 
-| Dimension | Verdict |
-|-----------|---------|
-| Plan Adherence | PASS |
-| Scope Discipline | PASS |
-| Safety & Quality | WARNING |
-| Architecture | PASS |
-| Pattern Consistency | PASS |
-| Success Criteria | WARNING |
+| Dimension           | Verdict |
+| ------------------- | ------- |
+| Plan Adherence      | PASS    |
+| Scope Discipline    | PASS    |
+| Safety & Quality    | WARNING |
+| Architecture        | PASS    |
+| Pattern Consistency | PASS    |
+| Success Criteria    | WARNING |
 
 Notatki weryfikacyjne (2026-06-11): `npm run check` 0 errors ✅, `npm run build` ✅ (ponowione dziś); `npx supabase db reset` nie powtórzone — lokalny stack wyłączony; zaliczone przy implementacji (Progress 1.1, bc57b37) i w ręcznym review na żywej bazie. Stara migracja `20260604000000_create_cards.sql` nietknięta (pusty diff w zakresie slice'a). Wszystkie kontrakty planu (migracja, types.ts, api/cards.ts, CardsSection, CreateCardForm, package.json) — MATCH; zero plików spoza planu; granice "What We're NOT Doing" zachowane.
 

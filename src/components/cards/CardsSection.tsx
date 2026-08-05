@@ -32,10 +32,7 @@ export default function CardsSection({ initialCards }: Props) {
           </h2>
           <ul className="space-y-2">
             {cards.map((card) => (
-              <li
-                key={card.id}
-                className="rounded-xl border border-white/10 bg-white/5 p-4 text-white"
-              >
+              <li key={card.id} className="rounded-xl border border-white/10 bg-white/5 p-4 text-white">
                 <p className="font-medium">{card.question}</p>
                 <p className="mt-1 text-sm text-blue-100/60">{card.answer}</p>
               </li>

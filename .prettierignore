@@ -1,0 +1,11 @@
+# Zarządzane przez npm — formatowanie tworzy szum przy każdym `npm install`.
+package-lock.json
+
+# Artefakty Supabase CLI (ignorowane przez zagnieżdżony supabase/.gitignore,
+# którego prettier nie czyta — widzi tylko .gitignore z korzenia).
+supabase/.temp/
+
+# Artefakty builda — objęte .gitignore, wymienione tu na wypadek zmiany tamtego.
+dist/
+.astro/
+.wrangler/

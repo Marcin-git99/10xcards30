@@ -27,23 +27,23 @@ top_blocker: time
 
 ## At a glance
 
-| ID   | Change ID              | Outcome (user can …)                                                                                       | Prerequisites | PRD refs                                               | Status   |
-| ---- | ---------------------- | ---------------------------------------------------------------------------------------------------------- | ------------- | ------------------------------------------------------ | -------- |
-| F-01 | db-schema-mvp          | (foundation) tabela cards zaktualizowana; tabela generations dodana; RLS kompletne                         | —             | FR-014, FR-018, FR-019, FR-028                         | done     |
-| F-02 | google-oauth-switch    | (foundation) logowanie przez Google OAuth działa; email+password usunięte                                  | —             | FR-001, FR-002, FR-003                                 | ready    |
+| ID   | Change ID              | Outcome (user can …)                                                                                      | Prerequisites | PRD refs                                                         | Status   |
+| ---- | ---------------------- | --------------------------------------------------------------------------------------------------------- | ------------- | ---------------------------------------------------------------- | -------- |
+| F-01 | db-schema-mvp          | (foundation) tabela cards zaktualizowana; tabela generations dodana; RLS kompletne                        | —             | FR-014, FR-018, FR-019, FR-028                                   | done     |
+| F-02 | google-oauth-switch    | (foundation) logowanie przez Google OAuth działa; email+password usunięte                                 | —             | FR-001, FR-002, FR-003                                           | ready    |
 | S-01 | first-gated-generation | wkleić tekst → wygenerować 5 kart AI → przejrzeć/edytować/odrzucić → zatwierdzić → karty zapisane w bazie | F-01, F-02    | US-01, US-04, US-05, US-09, FR-001–FR-003, FR-006–FR-014, FR-027 | proposed |
-| S-02 | srs-review-session     | przejść sesję powtórki: pytanie → odpowiedź → [Wiem/Nie wiem] → podsumowanie                               | S-01          | US-06, US-08, FR-015–FR-022                            | proposed |
-| S-03 | flashcard-library      | przeglądać karty, edytować Q/A, usunąć z potwierdzeniem, stworzyć pustą kartę ręcznie                      | F-01          | US-07, FR-023–FR-026, FR-028                           | proposed |
-| S-04 | account-lifecycle      | wylogować się i permanentnie usunąć konto z kaskadą danych                                                 | F-01, F-02    | US-02, US-03, FR-004, FR-005                           | proposed |
+| S-02 | srs-review-session     | przejść sesję powtórki: pytanie → odpowiedź → [Wiem/Nie wiem] → podsumowanie                              | S-01          | US-06, US-08, FR-015–FR-022                                      | proposed |
+| S-03 | flashcard-library      | przeglądać karty, edytować Q/A, usunąć z potwierdzeniem, stworzyć pustą kartę ręcznie                     | F-01          | US-07, FR-023–FR-026, FR-028                                     | proposed |
+| S-04 | account-lifecycle      | wylogować się i permanentnie usunąć konto z kaskadą danych                                                | F-01, F-02    | US-02, US-03, FR-004, FR-005                                     | proposed |
 
 ## Streams
 
 Navigation aid — groups items that share a Prerequisites chain. Canonical ordering still lives in the dependency graph below; this table is the proposed reading order across parallel tracks.
 
-| Stream | Theme             | Chain                              | Note                                                                          |
-| ------ | ----------------- | ---------------------------------- | ----------------------------------------------------------------------------- |
-| A      | Core loop         | `F-01`, `F-02` → `S-01` → `S-02`  | Ścieżka krytyczna do north star; main_goal:speed nakazuje realizować ten stream priorytetowo. |
-| B      | Library & account | `S-03`, `S-04`                     | Równolegle z `S-01` po wylądowaniu F-01+F-02; żaden z tych slices'ów nie blokuje S-02. |
+| Stream | Theme             | Chain                            | Note                                                                                          |
+| ------ | ----------------- | -------------------------------- | --------------------------------------------------------------------------------------------- |
+| A      | Core loop         | `F-01`, `F-02` → `S-01` → `S-02` | Ścieżka krytyczna do north star; main_goal:speed nakazuje realizować ten stream priorytetowo. |
+| B      | Library & account | `S-03`, `S-04`                   | Równolegle z `S-01` po wylądowaniu F-01+F-02; żaden z tych slices'ów nie blokuje S-02.        |
 
 ## Baseline
 
@@ -140,14 +140,14 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ## Backlog Handoff
 
-| Roadmap ID | Change ID              | Suggested issue title                               | Ready for `/10x-plan` | Notes                          |
-| ---------- | ---------------------- | --------------------------------------------------- | --------------------- | ------------------------------ |
-| F-01       | db-schema-mvp          | DB: migrate cards schema + add generations table    | yes                   | Run `/10x-plan db-schema-mvp`  |
+| Roadmap ID | Change ID              | Suggested issue title                               | Ready for `/10x-plan` | Notes                               |
+| ---------- | ---------------------- | --------------------------------------------------- | --------------------- | ----------------------------------- |
+| F-01       | db-schema-mvp          | DB: migrate cards schema + add generations table    | yes                   | Run `/10x-plan db-schema-mvp`       |
 | F-02       | google-oauth-switch    | Auth: switch from email+password to Google OAuth    | yes                   | Run `/10x-plan google-oauth-switch` |
-| S-01       | first-gated-generation | Feature: AI generation loop (paste → review → save) | no                    | Czeka na F-01 + F-02           |
-| S-02       | srs-review-session     | Feature: SRS review session (Leitner-light)         | no                    | Czeka na S-01                  |
-| S-03       | flashcard-library      | Feature: "Moje fiszki" library screen               | no                    | Czeka na F-01                  |
-| S-04       | account-lifecycle      | Feature: sign-out + permanent account deletion      | no                    | Czeka na F-01 + F-02           |
+| S-01       | first-gated-generation | Feature: AI generation loop (paste → review → save) | no                    | Czeka na F-01 + F-02                |
+| S-02       | srs-review-session     | Feature: SRS review session (Leitner-light)         | no                    | Czeka na S-01                       |
+| S-03       | flashcard-library      | Feature: "Moje fiszki" library screen               | no                    | Czeka na F-01                       |
+| S-04       | account-lifecycle      | Feature: sign-out + permanent account deletion      | no                    | Czeka na F-01 + F-02                |
 
 ## Open Roadmap Questions
 

@@ -42,10 +42,10 @@ Solo developer building 10xCards — a web-app for AI-assisted flashcard generat
 
 ## Pre-scaffold verification
 
-| Signal             | Value                                                      | Severity | Notes                                       |
-| ------------------ | ---------------------------------------------------------- | -------- | ------------------------------------------- |
-| npm package        | not run                                                    | n/a      | cmd_template starts with `git clone`; no npm CLI to check |
-| GitHub repo        | przeprogramowani/10x-astro-starter last pushed 2026-05-17  | fresh    | from card.docs_url; 17 days old at run time |
+| Signal      | Value                                                     | Severity | Notes                                                     |
+| ----------- | --------------------------------------------------------- | -------- | --------------------------------------------------------- |
+| npm package | not run                                                   | n/a      | cmd_template starts with `git clone`; no npm CLI to check |
+| GitHub repo | przeprogramowani/10x-astro-starter last pushed 2026-05-17 | fresh    | from card.docs_url; 17 days old at run time               |
 
 ## Scaffold log
 
@@ -68,12 +68,12 @@ Both are the OS-trust-store equivalent of the default code paths. No global git 
 
 ### Conflict matrix details
 
-| Path in scaffold | Existed in cwd? | Resolution                                                                          |
-| ---------------- | --------------- | ----------------------------------------------------------------------------------- |
-| `CLAUDE.md`      | yes (7126 B)    | existing wins; scaffold copy (3218 B) landed as `CLAUDE.md.scaffold`                |
-| `package-lock.json` | yes (87 B)   | existing wins; scaffold copy (475 894 B) landed as `package-lock.json.scaffold`     |
-| all other paths  | no              | moved silently into cwd                                                              |
-| `context/**`     | n/a             | scaffold ships no `context/` — your `context/` is untouched                          |
+| Path in scaffold    | Existed in cwd? | Resolution                                                                      |
+| ------------------- | --------------- | ------------------------------------------------------------------------------- |
+| `CLAUDE.md`         | yes (7126 B)    | existing wins; scaffold copy (3218 B) landed as `CLAUDE.md.scaffold`            |
+| `package-lock.json` | yes (87 B)      | existing wins; scaffold copy (475 894 B) landed as `package-lock.json.scaffold` |
+| all other paths     | no              | moved silently into cwd                                                         |
+| `context/**`        | n/a             | scaffold ships no `context/` — your `context/` is untouched                     |
 
 ### Files now present in cwd from the scaffold
 
@@ -111,21 +111,21 @@ None.
 
 ## Hints recorded but not acted on
 
-| Hint                       | Value                              |
-| -------------------------- | ---------------------------------- |
-| bootstrapper_confidence    | first-class                        |
-| quality_override           | false                              |
-| path_taken                 | standard                           |
-| self_check_answers         | null                               |
-| team_size                  | solo                               |
-| deployment_target          | cloudflare-pages                   |
-| ci_provider                | github-actions                     |
-| ci_default_flow            | auto-deploy-on-merge               |
-| has_auth                   | true                               |
-| has_payments               | false                              |
-| has_realtime               | false                              |
-| has_ai                     | true                               |
-| has_background_jobs        | false                              |
+| Hint                    | Value                |
+| ----------------------- | -------------------- |
+| bootstrapper_confidence | first-class          |
+| quality_override        | false                |
+| path_taken              | standard             |
+| self_check_answers      | null                 |
+| team_size               | solo                 |
+| deployment_target       | cloudflare-pages     |
+| ci_provider             | github-actions       |
+| ci_default_flow         | auto-deploy-on-merge |
+| has_auth                | true                 |
+| has_payments            | false                |
+| has_realtime            | false                |
+| has_ai                  | true                 |
+| has_background_jobs     | false                |
 
 A future M1L4 ("Memory Architecture") skill is expected to consume these hints when generating `CLAUDE.md` / `AGENTS.md`. v1 bootstrapper surfaces them here without acting on them.
 

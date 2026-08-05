@@ -1,0 +1,15 @@
+# Wymuś LF w drzewie roboczym niezależnie od core.autocrlf.
+# Bez tego `prettier` (endOfLine: "lf") widzi CRLF na Windows i zgłasza
+# jeden błąd na każdą linię pliku — bramka lint umiera po każdym checkout.
+* text=auto eol=lf
+
+# Binaria — nigdy nie normalizuj.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.pdf binary

@@ -68,6 +68,7 @@ Studenci kierunków o wysokiej gęstości materiału (medycyna, prawo, ekonomia)
 - **Then** the system creates or reconnects their account on the basis of the OAuth profile, establishes a session, and lands them on the main screen
 
 #### Acceptance Criteria
+
 - A first-time sign-in auto-creates an account bound to the OAuth profile (email + stable external identifier + optional display name).
 - A returning sign-in reconnects to the existing account based on the stable external identifier.
 - The user is not asked to confirm an email, set a password, or complete any additional onboarding step.
@@ -79,6 +80,7 @@ Studenci kierunków o wysokiej gęstości materiału (medycyna, prawo, ekonomia)
 - **Then** the session is terminated and the user is returned to the landing page
 
 #### Acceptance Criteria
+
 - After sign-out, no gated screen is accessible without a fresh sign-in.
 
 ### US-03: Permanently delete account
@@ -88,6 +90,7 @@ Studenci kierunków o wysokiej gęstości materiału (medycyna, prawo, ekonomia)
 - **Then** the system permanently and irreversibly removes the user's profile, all of their generations, and all of their cards, terminates the session, and redirects to the landing page
 
 #### Acceptance Criteria
+
 - No data belonging to the deleted user remains accessible by any path after the action completes.
 - A re-sign-in via the same OAuth profile after deletion produces a fresh, empty account (treated as a first-time sign-in).
 
@@ -98,6 +101,7 @@ Studenci kierunków o wysokiej gęstości materiału (medycyna, prawo, ekonomia)
 - **Then** within the latency target (p95 under 10 seconds, hard cutoff 30 seconds) the system returns a batch of exactly five question/answer cards and renders them in the post-generation review view
 
 #### Acceptance Criteria
+
 - If the source text contains fewer than 500 characters, the generation action is unavailable (or surfaces a clear minimum-length message).
 - If the request exceeds the hard cutoff or returns an invalid response, the user sees a friendly error and a retry action (see US-09).
 - The generated question/answer pairs are in the same language as the source text.
@@ -109,6 +113,7 @@ Studenci kierunków o wysokiej gęstości materiału (medycyna, prawo, ekonomia)
 - **Then** the remaining cards are persisted and an SRS session is started on them immediately
 
 #### Acceptance Criteria
+
 - Edits to question or answer fields are preserved locally while the user is reviewing; they are only persisted once the user confirms.
 - A card removed from the batch in the review view does not enter the user's library.
 - The review view does not offer an action to add a new card; manual card creation is available from the "Moje fiszki" library screen (see US-07 / FR-028).
@@ -121,6 +126,7 @@ Studenci kierunków o wysokiej gęstości materiału (medycyna, prawo, ekonomia)
 - **Then** they see one card at a time showing only its question; revealing the answer exposes [Wiem] and [Nie wiem]; each rating immediately advances to the next due card
 
 #### Acceptance Criteria
+
 - Clicking [Wiem] advances the card one box up the Leitner ladder (capped at box 5) and re-schedules its next review per the new box's interval.
 - Clicking [Nie wiem] resets the card to box 1 and re-schedules its next review for one day later.
 - The session ends when no more due cards remain; the user lands on a summary screen (see US-08).
@@ -132,6 +138,7 @@ Studenci kierunków o wysokiej gęstości materiału (medycyna, prawo, ekonomia)
 - **Then** they see a list of all their cards (question and answer visible), sorted by creation time with newest first, with edit and delete actions on each card
 
 #### Acceptance Criteria
+
 - Editing a card from this screen changes only its question and/or answer; the card's box position and next-review time are not affected.
 - Deleting a card requires a confirmation step.
 - The list shows both AI-generated cards and manually created cards.
@@ -144,6 +151,7 @@ Studenci kierunków o wysokiej gęstości materiału (medycyna, prawo, ekonomia)
 - **Then** the system shows a summary screen with the next-session copy ("Następna powtórka jutro o ~10:00"), the count of cards reviewed in the just-completed session, and the percentage of [Wiem] ratings in the session
 
 #### Acceptance Criteria
+
 - The summary contains no charts, trend visualizations, or cross-session analytics in MVP.
 - The "10:00" copy is a friendly default; actual due times are computed per card, so the user may legitimately enter the next session earlier or later.
 
@@ -154,6 +162,7 @@ Studenci kierunków o wysokiej gęstości materiału (medycyna, prawo, ekonomia)
 - **Then** the user sees a friendly error message and a [Spróbuj ponownie] action that re-issues the same request with the same source text
 
 #### Acceptance Criteria
+
 - The system does not persist any cards from a failed or invalid generation.
 - The user is not stuck on a blank loader past the hard cutoff.
 

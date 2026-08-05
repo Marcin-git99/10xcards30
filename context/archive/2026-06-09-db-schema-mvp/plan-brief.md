@@ -16,15 +16,15 @@ One migration creates `cards (id, user_id, front, back, created_at, updated_at)`
 
 ## Key Decisions Made
 
-| Decision | Choice | Why | Source |
-| --- | --- | --- | --- |
-| Migration strategy | New ALTER migration | Respects immutability of the applied migration; replays cleanly | Plan |
-| `source` type | `text` + CHECK | Easy to evolve in MVP, no enum migration pain | Plan |
-| Empty Q/A (FR-028) | `NOT NULL DEFAULT ''` | Empty manual card persists; never-null simplifies app code | Plan |
-| `generation_id` ON DELETE | SET NULL | Card is the durable "keeper"; nullable FK | Plan |
-| `updated_at` | DB trigger | Correct regardless of write path; closes current gap | Plan |
-| App-code sync scope | Minimal (types + compile) | Keep CI green without building S-01 features | Plan |
-| Empty-card SRS exclusion | Uniform defaults + query predicate | Simplest schema; exclusion owned by S-02 | Plan |
+| Decision                  | Choice                             | Why                                                             | Source |
+| ------------------------- | ---------------------------------- | --------------------------------------------------------------- | ------ |
+| Migration strategy        | New ALTER migration                | Respects immutability of the applied migration; replays cleanly | Plan   |
+| `source` type             | `text` + CHECK                     | Easy to evolve in MVP, no enum migration pain                   | Plan   |
+| Empty Q/A (FR-028)        | `NOT NULL DEFAULT ''`              | Empty manual card persists; never-null simplifies app code      | Plan   |
+| `generation_id` ON DELETE | SET NULL                           | Card is the durable "keeper"; nullable FK                       | Plan   |
+| `updated_at`              | DB trigger                         | Correct regardless of write path; closes current gap            | Plan   |
+| App-code sync scope       | Minimal (types + compile)          | Keep CI green without building S-01 features                    | Plan   |
+| Empty-card SRS exclusion  | Uniform defaults + query predicate | Simplest schema; exclusion owned by S-02                        | Plan   |
 
 ## Scope
 
@@ -38,10 +38,10 @@ Schema-first, one atomic migration: create `generations` first (FK dependency), 
 
 ## Phases at a Glance
 
-| Phase | What it delivers | Key risk |
-| --- | --- | --- |
-| 1. Schema migration | `generations` + reshaped `cards` + RLS + trigger | FK ordering; ALTER defaults for existing rows |
-| 2. App-code sync | `types.ts` + `api/cards.ts` compile against new schema | Missing a `front`/`back` reference → build red |
+| Phase               | What it delivers                                       | Key risk                                       |
+| ------------------- | ------------------------------------------------------ | ---------------------------------------------- |
+| 1. Schema migration | `generations` + reshaped `cards` + RLS + trigger       | FK ordering; ALTER defaults for existing rows  |
+| 2. App-code sync    | `types.ts` + `api/cards.ts` compile against new schema | Missing a `front`/`back` reference → build red |
 
 **Prerequisites:** none (F-01 is ready; local Supabase running for migration apply).
 **Estimated effort:** ~1 session across 2 phases.

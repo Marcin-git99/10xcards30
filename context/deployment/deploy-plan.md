@@ -11,6 +11,7 @@ account: turolmar1@gmail.com
 ## Pierwsze wdrożenie — audyt
 
 ### Status
+
 ✅ Wdrożone pomyślnie 2026-06-05.
 
 ### Wykonane kroki
@@ -24,14 +25,14 @@ account: turolmar1@gmail.com
 
 ### Parametry wdrożenia
 
-| Parametr | Wartość |
-|---|---|
-| Live URL | https://10xcards30.turolmar1-775.workers.dev |
-| Version ID | 027327c3-e367-43cc-8aa4-70267002eb2c |
-| Bundle (raw) | 1971.74 KiB |
-| Bundle (gzip) | 401.34 KiB |
-| Worker Startup Time | 25 ms |
-| Plan | Workers Free |
+| Parametr            | Wartość                                      |
+| ------------------- | -------------------------------------------- |
+| Live URL            | https://10xcards30.turolmar1-775.workers.dev |
+| Version ID          | 027327c3-e367-43cc-8aa4-70267002eb2c         |
+| Bundle (raw)        | 1971.74 KiB                                  |
+| Bundle (gzip)       | 401.34 KiB                                   |
+| Worker Startup Time | 25 ms                                        |
+| Plan                | Workers Free                                 |
 
 ### Zasoby automatycznie sprovisionowane przez Wrangler
 

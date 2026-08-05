@@ -1,4 +1,5 @@
 <!-- PLAN-REVIEW-REPORT -->
+
 # Plan Review: DB Schema Migration to PRD Model (F-01)
 
 - **Plan**: context/changes/db-schema-mvp/plan.md
@@ -9,13 +10,13 @@
 
 ## Verdicts
 
-| Dimension | Verdict (initial) | After fixes |
-|-----------|-------------------|-------------|
-| End-State Alignment | PASS | PASS |
-| Lean Execution | PASS | PASS |
-| Architectural Fitness | PASS | PASS |
-| Blind Spots | FAIL | PASS |
-| Plan Completeness | WARNING | PASS |
+| Dimension             | Verdict (initial) | After fixes |
+| --------------------- | ----------------- | ----------- |
+| End-State Alignment   | PASS              | PASS        |
+| Lean Execution        | PASS              | PASS        |
+| Architectural Fitness | PASS              | PASS        |
+| Blind Spots           | FAIL              | PASS        |
+| Plan Completeness     | WARNING           | PASS        |
 
 ## Grounding
 
