@@ -10,7 +10,7 @@ const supabase = createClient(Astro.request.headers, Astro.cookies);
 let initialCards: Card[] = [];
 if (supabase) {
   const { data } = await supabase.from("cards").select().order("created_at", { ascending: false });
-  initialCards = (data as Card[]) ?? [];
+  initialCards = (data as Card[] | null) ?? [];
 }
 ---
 

@@ -31,7 +31,7 @@ export const POST: APIRoute = async (context) => {
 
   const result = createCardSchema.safeParse(body);
   if (!result.success) {
-    return new Response(JSON.stringify({ error: result.error.flatten() }), {
+    return new Response(JSON.stringify({ error: z.flattenError(result.error) }), {
       status: 422,
       headers: { "Content-Type": "application/json" },
     });

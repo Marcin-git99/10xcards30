@@ -8,6 +8,16 @@ interface Props {
   onCardAdded?: (card: Card) => void;
 }
 
+/**
+ * Kształt ciała odpowiedzi błędu z /api/cards. Pole `error` bywa stringiem
+ * (401/400/500) albo obiektem zoda (422) — konsument musi to rozróżnić,
+ * inaczej React dostaje obiekt jako child i wyspa pada (patrz F5/F2 w
+ * context/archive/2026-06-09-db-schema-mvp/reviews/impl-review.md).
+ */
+interface ApiErrorBody {
+  error?: unknown;
+}
+
 export default function CreateCardForm({ onCardAdded }: Props) {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
@@ -23,7 +33,7 @@ export default function CreateCardForm({ onCardAdded }: Props) {
     return Object.keys(next).length === 0;
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     if (!validate()) return;
 
@@ -39,14 +49,16 @@ export default function CreateCardForm({ onCardAdded }: Props) {
       });
 
       if (res.ok) {
-        const card: Card = await res.json();
+        const card = (await res.json()) as Card;
         onCardAdded?.(card);
         setQuestion("");
         setAnswer("");
         setSuccess(true);
-        setTimeout(() => setSuccess(false), 3000);
+        setTimeout(() => {
+          setSuccess(false);
+        }, 3000);
       } else {
-        const data = await res.json();
+        const data = (await res.json()) as ApiErrorBody;
         setErrors({ server: typeof data.error === "string" ? data.error : "Something went wrong" });
       }
     } catch {
@@ -84,9 +96,7 @@ export default function CreateCardForm({ onCardAdded }: Props) {
         icon={<AlignLeft className="size-4" />}
       />
 
-      {errors.server && (
-        <p className="text-sm text-red-300">{errors.server}</p>
-      )}
+      {errors.server && <p className="text-sm text-red-300">{errors.server}</p>}
 
       {success && (
         <p className={cn("flex items-center gap-2 text-sm text-green-300")}>
