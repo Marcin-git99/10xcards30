@@ -752,13 +752,13 @@ linii.
 #### Automated
 
 - [x] 5.1 Workflow uruchamia się na Pull Requeście do `main` — pierwszy przebieg w historii repo (`CI #1`, commit `3ff34d7`). Uwaga: push na `main` **nie** wyzwolił przebiegu mimo poprawnego triggera, aktywnego workflow i `actions/permissions: enabled`; `workflow_dispatch` przez API zwracał HTTP 500. Ruszyło dopiero ręczne uruchomienie z interfejsu GitHub. Przyczyna nierozstrzygnięta — patrz Open Risks
-- [ ] 5.2 Wszystkie kroki przechodzą: `npm ci`, `astro sync`, lint, build, `test:hermetic`
-- [ ] 5.3 Krok lint przechodzi na runnerze Linux
+- [ ] 5.2 Wszystkie kroki przechodzą: `npm ci`, `astro sync`, lint, build, `test:hermetic` — **ZABLOKOWANE po stronie GitHuba (2026-08-06)**: `CI #1` stał w kolejce ~13 min i zakończył się jako `cancelled` z zerem wykonanych kroków — runner nigdy nie został przydzielony. Konfiguracja po naszej stronie jest kompletna i zweryfikowana lokalnie (symulacja kroku z tym samym env: 8 testów zielonych)
+- [ ] 5.3 Krok lint przechodzi na runnerze Linux — j.w.; to jedyne kryterium, które potwierdziłoby działanie `.gitattributes` poza Windows
 
 #### Manual
 
-- [ ] 5.4 Czas przebiegu poniżej ~5 minut
-- [ ] 5.5 Log kroku testów pokazuje liczbę uruchomionych testów
+- [ ] 5.4 Czas przebiegu poniżej ~5 minut — nieosiągalne bez wykonanego przebiegu
+- [ ] 5.5 Log kroku testów pokazuje liczbę uruchomionych testów — nieosiągalne bez wykonanego przebiegu
 
 ### Phase 6: Cookbook i domknięcie
 
@@ -769,5 +769,5 @@ linii.
 
 #### Manual
 
-- [ ] 6.3 Wzorce z §6 są wykonalne bez zaglądania do kodu testów
-- [ ] 6.4 §3 i §5 opisują stan zgodny z rzeczywistością repozytorium
+- [ ] 6.3 Wzorce z §6 są wykonalne bez zaglądania do kodu testów — do oceny przez człowieka przy pisaniu kolejnego testu
+- [x] 6.4 §3 i §5 opisują stan zgodny z rzeczywistością repozytorium — 2aa83c3 (zweryfikowane: wiersze §5 odpowiadają skryptom w `package.json`, §3 Faza 1 → `complete`)
