@@ -730,15 +730,15 @@ linii.
 
 #### Automated
 
-- [x] 4.1 `npm run test:hermetic` przechodzi po `npm run build`
-- [x] 4.2 `npm run test:hermetic` failuje czytelnie, gdy `dist/` nie istnieje
-- [x] 4.3 Test redakcji failuje po przywróceniu `error.message` w `cards.ts`
-- [x] 4.4 Test schematu failuje po dodaniu kolumny do `generations`
-- [x] 4.5 `npm run lint` i `npm run check` nadal zielone
+- [x] 4.1 `npm run test:hermetic` przechodzi po `npm run build` — 96acf4f
+- [x] 4.2 `npm run test:hermetic` failuje czytelnie, gdy `dist/` nie istnieje — 96acf4f
+- [x] 4.3 Test redakcji failuje po przywróceniu `error.message` w `cards.ts` — 96acf4f
+- [x] 4.4 Test schematu failuje po dodaniu kolumny do `generations` — 96acf4f
+- [x] 4.5 `npm run lint` i `npm run check` nadal zielone — 96acf4f
 
 #### Manual
 
-- [x] 4.6 Ręczne 422 przez formularz nie wysypuje wyspy React — zaliczone bez powtórki (decyzja 2026-08-06): Faza 4 nie dotknęła kodu produkcyjnego, sprawdzone ręcznie w Fazie 1, a kontrakt `error` jako string pilnuje teraz test hermetyczny
+- [x] 4.6 Ręczne 422 przez formularz nie wysypuje wyspy React — 96acf4f — zaliczone bez powtórki (decyzja 2026-08-06): Faza 4 nie dotknęła kodu produkcyjnego, sprawdzone ręcznie w Fazie 1, a kontrakt `error` jako string pilnuje teraz test hermetyczny
 
 ### Phase 5: Ożywienie bramek CI
 

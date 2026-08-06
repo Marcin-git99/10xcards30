@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 jobs:
   ci:
@@ -21,4 +21,22 @@ jobs:
       - run: npm run build
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+      # Tylko testy niewymagające bazy. Integracyjne (test/integration) zostają
+      # bramką ad hoc uruchamianą lokalnie — test-plan.md §4 wprost na to
+      # pozwala, bo start lokalnego Supabase na runnerze kosztuje więcej, niż
+      # daje na tym etapie.
+      #
+      # Dwie zmienne, dwa różne powody:
+      #  - SUPABASE_URL musi wskazywać localhost, inaczej guard z test/setup.ts
+      #    ubije przebieg. Testy hermetyczne i tak nie nawiązują połączenia,
+      #    więc wartość jest czysto formalna.
+      #  - SUPABASE_KEY musi być TYM SAMYM sekretem, którym zbudowano artefakt.
+      #    test/hermetic/build-artifact.test.ts szuka jego wartości w
+      #    dist/client; podanie tu atrapy dałoby bramkę, która zawsze
+      #    przechodzi, bo szukałaby ciągu, którego nigdy tam nie było.
+      - run: npm run test:hermetic
+        env:
+          SUPABASE_URL: http://127.0.0.1:54321
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
