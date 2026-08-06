@@ -351,8 +351,13 @@ faktycznie działa, a nie ten planowany.
 Udowodnić, że dane usera A są nieosiągalne i niemodyfikowalne dla usera B — przeciw
 realnej bazie, dwiema tożsamościami, z asercjami na stan po operacji.
 
-**Tryb: `/10x-tdd`.** Pierwsza czerwona asercja, jednym zdaniem: _„user B odczytuje
-zero kart, gdy jedyna karta w bazie należy do usera A"_.
+~~**Tryb: `/10x-tdd`.**~~ **Skorygowane 2026-08-06 — faza poszła przez
+`/10x-implement`.** Bramka `/10x-tdd` odrzuciła ją słusznie: polityki RLS
+istnieją od F-01, więc test byłby zielony w chwili napisania i nie byłoby kroku
+RED. Kryterium „czy potrafisz nazwać pierwszą czerwoną asercję" jest konieczne,
+ale niewystarczające — liczy się też, czy kod, który ją zazieleni, jeszcze nie
+istnieje. Funkcję RED pełni tu kryterium 3.2: test musi zrobić się czerwony po
+**osłabieniu** polityki.
 
 ### Changes Required:
 
@@ -438,8 +443,10 @@ przed przejściem dalej.
 
 Trzy asercje na trzech różnych warstwach, po jednej na każdą twarz Ryzyka #2.
 
-**Tryb: `/10x-tdd`** dla punktu 1. Pierwsza czerwona asercja: _„odpowiedź endpointu
-nie zawiera nazwy tabeli ani constraintu, gdy insert do bazy padnie"_.
+~~**Tryb: `/10x-tdd`** dla punktu 1.~~ **Skorygowane 2026-08-06 — faza poszła
+przez `/10x-implement`**, z tego samego powodu co Faza 3: redakcja błędu
+istnieje od naprawy F5. Funkcję RED pełni kryterium 4.3 (test czerwony po
+przywróceniu `error.message`).
 
 ### Changes Required:
 
@@ -744,7 +751,7 @@ linii.
 
 #### Automated
 
-- [ ] 5.1 Workflow uruchamia się na Pull Requeście do `main`
+- [x] 5.1 Workflow uruchamia się na Pull Requeście do `main` — pierwszy przebieg w historii repo (`CI #1`, commit `3ff34d7`). Uwaga: push na `main` **nie** wyzwolił przebiegu mimo poprawnego triggera, aktywnego workflow i `actions/permissions: enabled`; `workflow_dispatch` przez API zwracał HTTP 500. Ruszyło dopiero ręczne uruchomienie z interfejsu GitHub. Przyczyna nierozstrzygnięta — patrz Open Risks
 - [ ] 5.2 Wszystkie kroki przechodzą: `npm ci`, `astro sync`, lint, build, `test:hermetic`
 - [ ] 5.3 Krok lint przechodzi na runnerze Linux
 
@@ -757,8 +764,8 @@ linii.
 
 #### Automated
 
-- [ ] 6.1 `test-plan.md` nie zawiera `TBD` w §6.2, §6.3 ani §6.5
-- [ ] 6.2 Weryfikacja końcowa: `npm run lint && npm run check && npm run build && npm test`
+- [x] 6.1 `test-plan.md` nie zawiera `TBD` w §6.2, §6.3 ani §6.5
+- [x] 6.2 Weryfikacja końcowa: `npm run lint && npm run check && npm run build && npm test`
 
 #### Manual
 

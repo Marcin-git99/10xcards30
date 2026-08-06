@@ -99,7 +99,7 @@ aktualizuje go w miarę pojawiania się artefaktów na dysku.
 
 | #   | Phase name                               | Goal (one line)                                                                                                                                     | Risks covered | Test types         | Status      | Change folder                             |
 | --- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ------------------ | ----------- | ----------------------------------------- |
-| 1   | Runner + izolacja danych i brak wycieków | Postawić runner i ożywić martwe bramki; udowodnić, że dane usera A są nieosiągalne dla usera B, a odpowiedzi błędu nie wypisują wnętrzności systemu | #2, #4        | integration, gates | planned     | `context/changes/testing-data-isolation/` |
+| 1   | Runner + izolacja danych i brak wycieków | Postawić runner i ożywić martwe bramki; udowodnić, że dane usera A są nieosiągalne dla usera B, a odpowiedzi błędu nie wypisują wnętrzności systemu | #2, #4        | integration, gates | complete    | `context/changes/testing-data-isolation/` |
 | 2   | Bramka wejścia                           | Udowodnić, że user faktycznie wchodzi do aplikacji i w niej zostaje, a osoba bez sesji nie wchodzi                                                  | #1, #3        | integration        | not started | —                                         |
 | 3   | Kuratela paczki                          | Udowodnić, że biblioteka zawiera dokładnie to, co user zatwierdził — nic więcej i nic mniej                                                         | #5            | integration        | not started | —                                         |
 | 4   | Poprawność harmonogramu                  | Udowodnić, że drabina powtórek zachowuje się zgodnie z wymaganiami, a edycja treści karty jej nie rusza                                             | #6            | unit, integration  | not started | —                                         |
@@ -158,26 +158,27 @@ wylądowaniu tej fazy rolloutu; wcześniej ma status planowanej.
 | Bramka                               | Gdzie                    | Wymagana?                                | Co łapie                                             |
 | ------------------------------------ | ------------------------ | ---------------------------------------- | ---------------------------------------------------- |
 | typecheck (`astro check`)            | lokalnie                 | wymagana                                 | dryf typów                                           |
-| lint                                 | lokalnie + CI            | **martwa dziś** — wymagana po §3 Phase 1 | dryf składniowy i stylistyczny                       |
-| build                                | CI                       | **martwa dziś** — wymagana po §3 Phase 1 | błędy kompilacji i konfiguracji                      |
-| unit + integration                   | lokalnie + CI            | wymagana po §3 Phase 1                   | regresje logiki                                      |
+| lint                                 | lokalnie + CI            | wymagana (od §3 Phase 1)                 | dryf składniowy i stylistyczny                       |
+| build                                | CI                       | wymagana (od §3 Phase 1)                 | błędy kompilacji i konfiguracji                      |
+| testy hermetyczne (`test:hermetic`)  | lokalnie + CI            | wymagana (od §3 Phase 1)                 | regresje logiki niewymagające bazy, wyciek sekretu   |
+| testy integracyjne (`test:integration`) | lokalnie, ad hoc      | wymagana przed merge (poza CI)           | regresje reguł bazy — RLS, constrainty, schemat      |
 | pre-commit (husky + lint-staged)     | lokalnie                 | wymagana                                 | formatowanie i podstawowy lint na plikach w commicie |
 | ręczny smoke na wdrożonym środowisku | między merge a produkcją | zalecana                                 | awarie specyficzne dla runtime'u edge (Ryzyko 1)     |
 
-Dwa fakty, które Phase 1 musi naprawić, zanim ta tabela zacznie cokolwiek
-znaczyć:
+Dwa fakty, które Phase 1 musiała naprawić, zanim ta tabela zaczęła cokolwiek
+znaczyć — **oba naprawione 2026-08-06**:
 
-1. **Workflow CI wyzwala się na gałęzi, która w tym repozytorium nie
-   istnieje.** Gałąź domyślna to `main`; workflow nasłuchuje na `master`.
-   Oznacza to, że bramki lint i build nie uruchomiły się dotąd ani razu i nie
-   uruchomią się na żadnym Pull Requeście do `main`.
-2. **`npm run lint` failuje w całym repozytorium** i został zdescope'owany w
-   kryteriach sukcesu poprzedniego slice'a. Otwarta zmiana
-   `context/changes/lint-debt-cleanup/` istnieje właśnie po to. **Decyzja
-   (2026-08-02): Phase 1 wchłania ten dług** — bramka i pierwsze testy lądują
-   razem, bo osobno żadne z nich nie domyka kryterium sukcesu. Zmianę
-   `lint-debt-cleanup` należy zamknąć jako wchłoniętą przez
-   `testing-data-isolation`.
+1. ~~**Workflow CI wyzwala się na gałęzi, która w tym repozytorium nie
+   istnieje.**~~ Trigger przestawiony `master` → `main` (`515c76d`). Przy
+   okazji wyszło, że repozytorium **nie miało ustawionych sekretów**
+   `SUPABASE_URL`/`SUPABASE_KEY` — czyli nawet z poprawnym triggerem build
+   by nie przeszedł. Sekrety ustawione przez właściciela repo.
+2. ~~**`npm run lint` failuje w całym repozytorium.**~~ Naprawione
+   (`c552e38` + `ba1a0e6`): `.gitattributes` z `eol=lf` plus dziewięć realnych
+   naruszeń reguł. Uwaga na przyszłość: z tych 1050 błędów **1039 to były CRLF
+   widoczne wyłącznie na Windows** — na runnerze CI dług wynosił dziewięć
+   błędów, nie 1050. Zmiana `context/changes/lint-debt-cleanup/` zamknięta
+   jako wchłonięta przez `testing-data-isolation`.
 
 ## 6. Cookbook Patterns
 
@@ -192,14 +193,89 @@ bez sesji nie otrzymuje treści chronionej" (Ryzyko 3).
 
 ### 6.2 Dodanie testu izolacji danych między userami
 
-TBD — patrz §3 Phase 1. Wzorzec ma pokrywać scenariusz „user A nie dosięga
-zasobu usera B, również przy podmianie identyfikatora" (Ryzyko 4), wraz z
-przepisem na zestawienie dwóch tożsamości w jednym teście.
+Wzorzec: `test/integration/cards-isolation.test.ts`. Fixture:
+`test/helpers/identities.ts`.
+
+**Dwie tożsamości.** `createIdentity("etykieta")` zakłada konto przez zwykłe
+`signUp()` i zwraca uwierzytelnionego klienta. Działa bez klucza serwisowego,
+bo `supabase/config.toml` ma `[auth.email] enable_confirmations = false`.
+**Nie sięgaj po klucz serwisowy** — omija RLS, czyli dokładnie tę warstwę,
+której test ma bronić. Klienty mają `persistSession: false`, żeby sesje nie
+wyciekały między plikami.
+
+**Odmowa RLS jest cicha.** PostgREST zwraca `HTTP 200`, `error: null` i zero
+wierszy — nie 403 i nie wyjątek. Test napisany jako „oczekuj błędu"
+**przeszedłby także na bazie bez RLS**, gdyby danych po prostu nie było.
+Jedyny wyjątek: INSERT z cudzym `user_id` daje twarde `42501`.
+
+**Asercja idzie na stan po operacji, nie na wynik operacji.** Pusty wynik
+`update()` niczego nie dowodzi — bez `.select()` PostgREST nie zwraca wierszy
+nawet przy udanym zapisie. Odczytaj zasób **klientem właściciela** i sprawdź,
+że jest nietknięty:
+
+```ts
+await bob.client.from("cards").update({ question: "PWNED" }).eq("id", aliceCardId);
+const { data } = await alice.client.from("cards").select().eq("id", aliceCardId).maybeSingle<Card>();
+expect(data?.question).toBe("Pytanie Alice");
+```
+
+**Zawsze zweryfikuj mutacją.** Test izolacji, który przechodzi też przy
+złamanej izolacji, jest gorszy niż jego brak. Właściwa mutacja to
+**osłabienie** polityki, nie jej usunięcie:
+
+```bash
+docker exec supabase_db_<projekt> psql -U postgres -c \
+  'alter policy "users can select their own cards" on cards using (true);'
+```
+
+Usunięcie polityki (`drop policy`) czyni bazę **bardziej** restrykcyjną —
+default-deny blokuje wszystkich i testy słusznie przechodzą. Przywracasz
+przez `alter policy ... using (user_id = auth.uid())` albo `supabase db reset`.
+
+**Polityka SELECT chroni także UPDATE i DELETE.** PostgreSQL stosuje ją do
+`UPDATE ... WHERE`, bo zapytanie musi najpierw odczytać wiersz. Osłabienie
+samego UPDATE nie złamie testu — potrzeba SELECT + UPDATE razem. Przy
+projektowaniu nowych polityk traktuj SELECT jako warstwę nośną.
 
 ### 6.3 Dodanie testu na ścieżkę błędu API
 
-TBD — patrz §3 Phase 1. Wzorzec ma pokrywać scenariusz „odpowiedź błędu nie
-ujawnia wnętrzności systemu" (Ryzyko 2).
+Wzorzec: `test/hermetic/cards-error-redaction.test.ts`.
+
+**Wybór warstwy.** Zanim napiszesz test integracyjny, sprawdź, czy gałąź błędu
+jest w ogóle osiągalna przez HTTP. W `POST /api/cards` nie jest: `z.object`
+bez `.strict()` usuwa nieznane pola, więc klient nie ma jak naruszyć CHECK-a.
+Taka ścieżka należy do testu **hermetycznego** — inaczej wymuszasz stan,
+którego produkcja nie osiąga.
+
+**Stubuj granicę, nie moduł pod testem.** Podmieniamy klienta Supabase
+(`vi.mock("@/lib/supabase")`), a endpoint wykonuje swoją realną ścieżkę błędu.
+Karm stub kształtem zdjętym z żywej bazy, nie wymyślonym:
+
+```ts
+const REAL_DB_ERROR = {
+  code: "23514",
+  message: 'new row for relation "cards" violates check constraint "cards_source_check"',
+  details: null, hint: null,
+};
+```
+
+**Asercja negatywna na listę ciągów**, nie porównanie z treścią komunikatu.
+Skopiowanie oczekiwanej wartości z implementacji daje test-lustro, który
+przechodzi także po regresji:
+
+```ts
+for (const leak of ["cards", "constraint", "violates", "23514", "relation"]) {
+  expect(body.toLowerCase()).not.toContain(leak);
+}
+```
+
+**Redakcja ma dwie połowy.** Szczegóły mają zniknąć z odpowiedzi, ale trafić
+do logu serwera. Bez asercji na `console.error` „poprawka" polegająca na cichym
+połknięciu błędu też przeszłaby test — i zabiłaby diagnostykę produkcyjną.
+
+**Sprawdź kontrakt dla klienta.** Pole `error` musi być stringiem; obiekt
+renderowany jako React child wysypuje wyspę (precedens: §F2 w
+`context/archive/2026-06-09-db-schema-mvp/reviews/impl-review.md`).
 
 ### 6.4 Dodanie testu jednostkowego reguły biznesowej
 
@@ -209,13 +285,63 @@ nie z testowanej implementacji.
 
 ### 6.5 Dodanie testu dla nowego endpointu API
 
-TBD — patrz §3 Phase 1. Wzorzec ma opisać domyślną warstwę, politykę
-mockowania i sposób asercji na skutki uboczne, a nie tylko na kształt
-odpowiedzi.
+**Domyślna warstwa** wynika z tego, czego wymaga uruchomienie, nie z etykiety:
+
+| Co sprawdzasz | Katalog | Wymaga |
+|---|---|---|
+| reguły bazy, kaskady, constrainty | `test/integration/` | działającego Supabase |
+| gałęzie błędu nieosiągalne przez HTTP, artefakt builda | `test/hermetic/` | tylko `dist/` |
+
+`npm run test:hermetic` idzie na CI, `npm run test:integration` zostaje bramką
+ad hoc (§4). Ten podział jest też podziałem w `.github/workflows/ci.yml`.
+
+**Polityka mockowania: tylko granica sieci, nigdy moduł wewnętrzny.**
+Mockowanie warstwy, która egzekwuje testowaną regułę, unieważnia test.
+
+**Asercja na skutek uboczny, nie na kształt odpowiedzi.** `201` z poprawnym
+JSON-em nie dowodzi, że wiersz powstał, ma właściwego właściciela i nie
+nadpisał cudzego. Po każdym zapisie odczytaj stan i sprawdź go osobno.
+
+**Wywoływanie endpointu w teście.** Import modułu route'u i wywołanie
+`POST(context)` z ręcznie złożonym `APIContext` — patrz
+`test/hermetic/cards-error-redaction.test.ts`. Minimalny kontekst to `locals`,
+`request` i `cookies`; reszty Astro nie wymaga.
+
+**Guard środowiskowy działa dla każdego testu.** `test/setup.ts` ubija cały
+przebieg, jeśli `SUPABASE_URL` widziany przez `astro:env/server` nie wskazuje
+localhosta. Nie omijaj go — testy integracyjne zakładają konta i piszą wiersze.
 
 ### 6.6 Notatki z poszczególnych faz rolloutu
 
-(Uzupełniane po każdej zakończonej fazie.)
+**Phase 1 — Runner + izolacja danych i brak wycieków (2026-08-05/06).**
+
+Pułapki środowiskowe, które kosztowały najwięcej czasu:
+
+- **`[vite] server restarted` nie przeładowuje `process.env`.** Adapter
+  Cloudflare wstrzykuje tam wartości z `.dev.vars` przy starcie procesu.
+  Po zmianie `.env`/`.dev.vars` **ubij proces**, nie licz na restart Vite.
+  Objaw: aplikacja pisze do produkcji, mimo że oba pliki wskazują localhost.
+- **Fragmenty ciasteczek z dwóch projektów Supabase unieważniają się
+  nawzajem.** Supabase tnie token na kilka ciasteczek; mieszanka ze starego
+  i nowego projektu daje „zalogowany na `/`, odbity z `/dashboard`". Przy
+  przełączaniu środowisk używaj okna incognito.
+- **`supabase db reset` zostawia Kong z nieświeżym wpisem auth** — objaw to
+  `502` na `/auth/v1/*` mimo zdrowego kontenera. Lekarstwo:
+  `docker restart supabase_kong_<projekt>`.
+- **`astro:env/server` w Vitest czyta `.env.test`** (sprawdzone
+  eksperymentalnie), ale `process.env` wygrywa z plikiem — zabłąkana zmienna
+  w powłoce przekieruje testy. Dlatego guard czyta wartość efektywną, a nie
+  zawartość pliku.
+- **Adapter Cloudflare jest wyłączony pod Vitest** (`process.env.VITEST`
+  w `astro.config.mjs`), bo jego plugin Vite odrzuca `resolve.external`
+  ustawiane przez Vitest dla środowiska SSR.
+- **Dług CRLF był widoczny tylko na Windows.** `core.autocrlf=true`
+  normalizuje przy commicie, więc repozytorium od zawsze trzymało LF —
+  na Linuksie tych 1039 błędów nigdy nie było. `.gitattributes` z `eol=lf`
+  wyrównuje drzewo robocze.
+- **Bramka artefaktu celuje w `dist/client/**`, nie w `dist/`.** Sekret
+  legalnie siedzi w `dist/server/.dev.vars`, który nie jest publikowany
+  (adapter nadpisuje `assets.directory` na `../client`).
 
 ## 7. What We Deliberately Don't Test
 

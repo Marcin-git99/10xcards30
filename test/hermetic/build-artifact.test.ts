@@ -21,10 +21,28 @@ import { SUPABASE_KEY } from "astro:env/server";
 
 const CLIENT_DIR = path.resolve("dist/client");
 
+/**
+ * Odporny na wyścig z buildem: `npm run build && npm test` potrafi trafić na
+ * moment, w którym katalog jest jeszcze przepisywany i `statSync` rzuca ENOENT
+ * na pliku wylistowanym chwilę wcześniej. Zaobserwowane raz, nieodtwarzalne —
+ * ale flake w bramce bezpieczeństwa jest gorszy niż pominięcie jednego pliku,
+ * bo uczy zespół ignorować jej wynik.
+ */
 function walk(dir: string): string[] {
-  return readdirSync(dir).flatMap((entry) => {
+  let entries: string[];
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    return [];
+  }
+
+  return entries.flatMap((entry) => {
     const full = path.join(dir, entry);
-    return statSync(full).isDirectory() ? walk(full) : [full];
+    try {
+      return statSync(full).isDirectory() ? walk(full) : [full];
+    } catch {
+      return [];
+    }
   });
 }
 
