@@ -702,29 +702,29 @@ linii.
 
 #### Automated
 
-- [x] 2.1 `npm test` uruchamia się i wykonuje test sanity
-- [x] 2.2 Test sanity przechodzi: `SUPABASE_URL` widziany przez kod aplikacji wskazuje localhost
-- [x] 2.3 Guard ubija przebieg przy nielokalnym `SUPABASE_URL`
-- [x] 2.4 `npm run lint` nadal zwraca zero błędów
-- [x] 2.5 `npm run check` obejmuje nowe pliki bez błędów
+- [x] 2.1 `npm test` uruchamia się i wykonuje test sanity — 3685ba8
+- [x] 2.2 Test sanity przechodzi: `SUPABASE_URL` widziany przez kod aplikacji wskazuje localhost — 3685ba8
+- [x] 2.3 Guard ubija przebieg przy nielokalnym `SUPABASE_URL` — 3685ba8
+- [x] 2.4 `npm run lint` nadal zwraca zero błędów — 3685ba8
+- [x] 2.5 `npm run check` obejmuje nowe pliki bez błędów — 3685ba8
 
 #### Manual
 
-- [x] 2.6 Komunikat guardu jest zrozumiały i wskazuje plik do poprawy
-- [x] 2.7 `.env.test` nie pojawia się w `git status`
+- [x] 2.6 Komunikat guardu jest zrozumiały i wskazuje plik do poprawy — 3685ba8
+- [x] 2.7 `.env.test` nie pojawia się w `git status` — 3685ba8
 
 ### Phase 3: Izolacja danych między userami (Ryzyko #4)
 
 #### Automated
 
-- [ ] 3.1 `npm run test:integration` przechodzi przy uruchomionym Supabase
-- [ ] 3.2 Testy failują po wyłączeniu polityki RLS (SELECT i UPDATE)
-- [ ] 3.3 `npm run lint` i `npm run check` nadal zielone
+- [x] 3.1 `npm run test:integration` przechodzi przy uruchomionym Supabase
+- [x] 3.2 Testy failują po wyłączeniu polityki RLS (SELECT i UPDATE) — kryterium skorygowane w trakcie: właściwą mutacją jest **osłabienie** polityki (`using (true)`), nie jej usunięcie; usunięcie czyni bazę bardziej restrykcyjną i testy słusznie przechodzą
+- [x] 3.3 `npm run lint` i `npm run check` nadal zielone
 
 #### Manual
 
-- [ ] 3.4 Testy przechodzą po `npx supabase db reset`
-- [ ] 3.5 Dwa kolejne przebiegi pod rząd przechodzą bez czyszczenia bazy
+- [x] 3.4 Testy przechodzą po `npx supabase db reset`
+- [x] 3.5 Dwa kolejne przebiegi pod rząd przechodzą bez czyszczenia bazy
 
 ### Phase 4: Brak wycieków wnętrzności (Ryzyko #2)
 
