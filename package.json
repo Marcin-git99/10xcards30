@@ -65,7 +65,7 @@
     "vite": "^7.3.2"
   },
   "lint-staged": {
-    "*.{ts,tsx,astro}": [
+    "*.{ts,tsx,astro,js,mjs,cjs}": [
       "eslint --fix --cache --cache-location node_modules/.cache/eslint/"
     ],
     "*.{json,css,md}": [
