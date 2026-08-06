@@ -717,28 +717,28 @@ linii.
 
 #### Automated
 
-- [x] 3.1 `npm run test:integration` przechodzi przy uruchomionym Supabase
-- [x] 3.2 Testy failują po wyłączeniu polityki RLS (SELECT i UPDATE) — kryterium skorygowane w trakcie: właściwą mutacją jest **osłabienie** polityki (`using (true)`), nie jej usunięcie; usunięcie czyni bazę bardziej restrykcyjną i testy słusznie przechodzą
-- [x] 3.3 `npm run lint` i `npm run check` nadal zielone
+- [x] 3.1 `npm run test:integration` przechodzi przy uruchomionym Supabase — e804560
+- [x] 3.2 Testy failują po wyłączeniu polityki RLS (SELECT i UPDATE) — kryterium skorygowane w trakcie: właściwą mutacją jest **osłabienie** polityki (`using (true)`), nie jej usunięcie; usunięcie czyni bazę bardziej restrykcyjną i testy słusznie przechodzą — e804560
+- [x] 3.3 `npm run lint` i `npm run check` nadal zielone — e804560
 
 #### Manual
 
-- [x] 3.4 Testy przechodzą po `npx supabase db reset`
-- [x] 3.5 Dwa kolejne przebiegi pod rząd przechodzą bez czyszczenia bazy
+- [x] 3.4 Testy przechodzą po `npx supabase db reset` — e804560
+- [x] 3.5 Dwa kolejne przebiegi pod rząd przechodzą bez czyszczenia bazy — e804560
 
 ### Phase 4: Brak wycieków wnętrzności (Ryzyko #2)
 
 #### Automated
 
-- [ ] 4.1 `npm run test:hermetic` przechodzi po `npm run build`
-- [ ] 4.2 `npm run test:hermetic` failuje czytelnie, gdy `dist/` nie istnieje
-- [ ] 4.3 Test redakcji failuje po przywróceniu `error.message` w `cards.ts`
-- [ ] 4.4 Test schematu failuje po dodaniu kolumny do `generations`
-- [ ] 4.5 `npm run lint` i `npm run check` nadal zielone
+- [x] 4.1 `npm run test:hermetic` przechodzi po `npm run build`
+- [x] 4.2 `npm run test:hermetic` failuje czytelnie, gdy `dist/` nie istnieje
+- [x] 4.3 Test redakcji failuje po przywróceniu `error.message` w `cards.ts`
+- [x] 4.4 Test schematu failuje po dodaniu kolumny do `generations`
+- [x] 4.5 `npm run lint` i `npm run check` nadal zielone
 
 #### Manual
 
-- [ ] 4.6 Ręczne 422 przez formularz nie wysypuje wyspy React
+- [x] 4.6 Ręczne 422 przez formularz nie wysypuje wyspy React — zaliczone bez powtórki (decyzja 2026-08-06): Faza 4 nie dotknęła kodu produkcyjnego, sprawdzone ręcznie w Fazie 1, a kontrakt `error` jako string pilnuje teraz test hermetyczny
 
 ### Phase 5: Ożywienie bramek CI
 
