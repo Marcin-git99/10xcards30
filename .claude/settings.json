@@ -18,5 +18,20 @@
     ],
     "ask": ["Bash(curl *)", "Bash(wget *)", "Bash(git push *)", "Bash(git push)"],
     "deny": ["Bash(rm -rf *)"]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/hooks/post-edit.mjs\"",
+            "timeout": 60,
+            "statusMessage": "Sprawdzam edytowany plik..."
+          }
+        ]
+      }
+    ]
   }
 }

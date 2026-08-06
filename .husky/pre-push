@@ -1,0 +1,7 @@
+# Warstwa pre-push: cięższe kontrole, zanim kod opuści maszynę (test-plan.md §5).
+# Per-edit łapie formatowanie, pre-commit lint na plikach w commicie — tutaj
+# idzie to, co na tamte warstwy było za wolne: pełny typecheck (~32 s) i cała
+# suita hermetyczna (~12 s). Testy integracyjne zostają bramką ad hoc, bo
+# wymagają działającego Supabase (§5) — pre-push nie ma prawa tego zakładać.
+npm run check
+npm run test:hermetic

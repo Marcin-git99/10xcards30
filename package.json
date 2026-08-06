@@ -13,7 +13,8 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:hermetic": "vitest run test/hermetic",
-    "test:integration": "vitest run test/integration"
+    "test:integration": "vitest run test/integration",
+    "prepare": "husky"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.8",
@@ -65,7 +66,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx,astro}": [
-      "eslint --fix"
+      "eslint --fix --cache --cache-location node_modules/.cache/eslint/"
     ],
     "*.{json,css,md}": [
       "prettier --write"
