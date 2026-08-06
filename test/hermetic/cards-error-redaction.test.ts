@@ -96,6 +96,28 @@ describe("redakcja błędu bazy w POST /api/cards", () => {
     expect(logged).toContain("23514");
   });
 
+  it("łączy odpowiedź z logiem tym samym identyfikatorem", async () => {
+    const { POST } = await import("@/pages/api/cards");
+
+    const response = await POST(postCardRequest());
+    const payload = (await response.json()) as { error: string };
+
+    // Sedno korelacji: ref w odpowiedzi musi być TYM SAMYM refem co w logu.
+    // Dwa niezależnie wygenerowane identyfikatory przeszłyby każdą pozostałą
+    // asercję w tym pliku — redakcja nadal by działała, log nadal by istniał —
+    // a jedyny powód istnienia refa, czyli możliwość połączenia zgłoszenia
+    // usera z wpisem w logu, byłby po cichu zerwany.
+    const match = /Support reference: ([0-9a-f-]{36})/.exec(payload.error);
+    expect(match).not.toBeNull();
+
+    const ref = match?.[1] ?? "";
+    // Bez tej asercji pusty ref przepuściłby `toContain("")` jako trywialnie prawdziwy.
+    expect(ref).not.toBe("");
+
+    const logged = JSON.stringify(consoleError.mock.calls);
+    expect(logged).toContain(ref);
+  });
+
   it("zwraca ciało w formacie JSON z polem error jako tekstem", async () => {
     const { POST } = await import("@/pages/api/cards");
 
