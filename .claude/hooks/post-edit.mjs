@@ -38,6 +38,13 @@ const FORMATTABLE = new Set([".ts", ".tsx", ".astro", ".json", ".css", ".md", ".
 const SKIP_DIRS = ["node_modules/", "dist/", ".astro/", ".git/", "supabase/.temp/"];
 
 /**
+ * Zapisany escape'em, nie dosłownym znakiem: dosłowny U+FEFF jest niewidoczny
+ * w diffie i łamie regułę `no-irregular-whitespace` (przekonaliśmy się o tym
+ * dopiero wtedy, gdy `npm run lint` przestał przechodzić).
+ */
+const BOM = "\uFEFF";
+
+/**
  * Czy edytowany plik należy do obszaru ryzyka, który zasługuje na testy przy
  * każdej edycji?
  *
@@ -49,28 +56,50 @@ const SKIP_DIRS = ["node_modules/", "dist/", ".astro/", ".git/", "supabase/.temp
  *          np. "src/pages/api/cards.ts" albo "src/components/ui/button.tsx".
  * Wyjście: true → hook dopłaca 12 s na `vitest related` dla tego pliku.
  *
- * Do rozważenia przy pisaniu warunku:
- *   - Ryzyko #2 (wyciek wnętrzności systemu) i #4 (dane usera A widoczne dla
- *     usera B) mają dziś realne testy — i oba mieszkają w warstwie API.
- *   - Ryzyko #3 (dostęp bez sesji) przechodzi przez `src/middleware.ts`, który
- *     nie jest endpointem, a bramkuje wszystkie chronione trasy naraz.
- *   - `src/lib/supabase.ts` to fabryka klienta — to on decyduje o kształcie
- *     ciasteczek i sesji (Ryzyko #1, §6.6 „fragmenty ciasteczek…").
- *   - Kontrargument wart rozważenia: pliki w `test/` przy edycji też mogłyby
- *     odpalać własne testy. Tanio, ale czy to sygnał, czy tylko echo?
- *   - Czego świadomie NIE obejmować: `src/components/ui/**` (kod shadcn/ui,
- *     testowany u źródła — §7), `src/styles/**`, pliki `.astro` warstwy
- *     prezentacji (§7 wyklucza testy wyglądu).
+ * Predykat składa się z dwóch list, bo miesza dwie różne rzeczy i mylenie ich
+ * prowadzi do złych decyzji (autor tego pliku pomylił je dwa razy, zanim
+ * sprawdził empirycznie):
  *
- * @param {string} relPath
- * @returns {boolean}
+ *   RISK_PATHS  — GDZIE mieszka ryzyko. Wynika z §2 test-planu, jest stabilne,
+ *                 nie zmienia się, gdy dochodzą testy.
+ *   NO_TESTS_YET — gdzie `vitest related` znalazłby DZIŚ zero plików. To stan
+ *                 przejściowy: kurczy się z każdą fazą rolloutu.
+ *
+ * Świadomie poza `RISK_PATHS`: `src/components/ui/**` (kod shadcn/ui, testowany
+ * u źródła — §7), `src/styles/**` i `.astro` warstwy prezentacji (§7 wyklucza
+ * testy wyglądu), `test/**` (edycja testu odpalałaby test napisany przed
+ * chwilą — to echo, nie sygnał).
+ */
+
+/** Gdzie mieszka ryzyko (test-plan.md §2). Stabilne. */
+const RISK_PATHS = [
+  "src/pages/api/", // Ryzyko #2 (wyciek wnętrzności), #4 (dane usera A u usera B)
+  "src/middleware.ts", // Ryzyko #3 (dostęp bez ważnej sesji) — bramkuje wszystkie chronione trasy naraz
+  "src/lib/supabase.ts", // Ryzyko #1 (sesja i ciasteczka) — fabryka klienta
+  "src/lib/api-error.ts", // Ryzyko #2 — polityka redakcji błędów
+];
+
+/**
+ * Ścieżki objęte ryzykiem, które NIE MAJĄ dziś powiązanych testów. `vitest
+ * related` zwróciłby „No test files found" po ~13 s — zero sygnału za pełną
+ * cenę, czyli dokładnie to, czego zabrania §1 („koszt × sygnał").
+ *
+ * Sprawdzone empirycznie 2026-08-06. **Usuwaj stąd wpisy, gdy kolejne fazy
+ * rolloutu dołożą testy** — to jedyna lista, którą trzeba tu ruszać:
+ *   - `src/middleware.ts` → Faza 2 rolloutu (bramka wejścia, Ryzyko #3)
+ *   - `src/pages/api/auth/` → Faza 2; przepisuje je też F-02 (Google OAuth)
+ */
+const NO_TESTS_YET = ["src/middleware.ts", "src/pages/api/auth/"];
+
+/**
+ * @param {string} relPath ścieżka względem korzenia repo, POSIX-owa
+ * @returns {boolean} true → hook dopłaca ~13 s na `vitest related`
  */
 function isRiskArea(relPath) {
-  // TODO(Marcin): zdefiniuj predykat obszaru ryzyka na podstawie test-plan.md §2.
-  // Dopóki zwraca false, hook robi wyłącznie formatowanie — jest bezpieczny,
-  // po prostu nie odpala jeszcze testów.
-  void relPath;
-  return false;
+  if (relPath.startsWith("src/components/ui/")) return false;
+  if (NO_TESTS_YET.some((prefix) => relPath.startsWith(prefix))) return false;
+
+  return RISK_PATHS.some((prefix) => relPath.startsWith(prefix));
 }
 
 /** Uruchamia binarkę z node_modules przez bieżący interpreter Node. */
@@ -85,8 +114,11 @@ function runNodeBin(relBinPath, args) {
 function main() {
   let event;
   try {
-    // ﻿: niektóre powłoki (PowerShell) doklejają BOM na początku pipe'a.
-    event = JSON.parse(readFileSync(0, "utf8").replace(/^﻿/, ""));
+    // Niektóre powłoki (PowerShell) doklejają BOM na początku pipe'a. Zapis
+    // przez escape, nie dosłownym znakiem: dosłowny jest niewidoczny w diffie
+    // i łamie regułę no-irregular-whitespace.
+    const raw = readFileSync(0, "utf8");
+    event = JSON.parse(raw.startsWith(BOM) ? raw.slice(1) : raw);
   } catch (err) {
     // Kod ≠ 0 i ≠ 2 = błąd nieblokujący: widoczny w transkrypcie, ale niepodany
     // agentowi jako feedback o kodzie. Świadomie NIE wychodzimy tu zerem —

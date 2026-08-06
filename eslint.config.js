@@ -68,9 +68,23 @@ const astroConfig = tseslint.config({
   },
 });
 
+// Skrypty hooków agenta (.claude/hooks/*.mjs) to zwykły Node poza tsconfigiem
+// aplikacji, więc `projectService: true` ich nie widzi i type-aware parser
+// wywala się na "was not found by the project service". Lintujemy je bez
+// warstwy typów — nadal łapiemy nieużywane zmienne, złą składnię i styl.
+const hookScriptsConfig = tseslint.config({
+  files: [".claude/hooks/**/*.mjs"],
+  extends: [tseslint.configs.disableTypeChecked],
+  languageOptions: {
+    parserOptions: { projectService: false, project: false },
+    globals: { process: "readonly", console: "readonly" },
+  },
+});
+
 export default tseslint.config(
   includeIgnoreFile(gitignorePath),
   baseConfig,
+  hookScriptsConfig,
   reactConfig,
   eslintPluginAstro.configs["flat/recommended"],
   ...eslintPluginAstro.configs["flat/jsx-a11y-recommended"],
