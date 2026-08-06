@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase";
+import { logServerError } from "@/lib/api-error";
 import type { Card } from "@/types";
 
 export const prerender = false;
@@ -52,8 +53,10 @@ export const POST: APIRoute = async (context) => {
     .single<Card>();
 
   if (error) {
-    console.error("Failed to create card:", error);
-    return new Response(JSON.stringify({ error: "Failed to create card" }), {
+    // Ten sam ref w logu i w odpowiedzi — bez tego redakcja odcina operatora
+    // od diagnostyki tak samo skutecznie, jak chroni usera przed wyciekiem.
+    const ref = logServerError("Failed to create card", error);
+    return new Response(JSON.stringify({ error: `Could not save the card. Support reference: ${ref}` }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
