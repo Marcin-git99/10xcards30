@@ -137,11 +137,17 @@ wcześniej spowoduje, że pierwszy przebieg workflow w historii repozytorium bę
 czerwony na 1039 błędach formatowania — i utrwali przekonanie, że bramka jest
 kłopotem, a nie sygnałem.
 
-**Renormalizacja a otwarte PR-y.** `.gitattributes` z jednorazową renormalizacją
+**Renormalizacja a otwarte PR-y.** ~~`.gitattributes` z jednorazową renormalizacją
 dotknie prawie każdego pliku. Otwarte Pull Requesty #1 i #2 (F-02, S-03) będą
-wymagały rebase'u i pokażą konflikty na końcach linii. Renormalizację należy
-wykonać jako **osobny commit**, żeby rebase dało się rozwiązać strategią
-„weź wszystko z jednej strony".
+wymagały rebase'u i pokażą konflikty na końcach linii.~~
+
+**Skorygowane po wykonaniu Fazy 1 (2026-08-05):** to ostrzeżenie było nadmiarowe.
+`core.autocrlf=true` konwertuje CRLF→LF **przy commicie**, więc w repozytorium
+pliki od zawsze były LF-owe — CRLF istniał wyłącznie w drzewie roboczym. Commit
+renormalizacyjny objął **16 plików** (realne zmiany formatowania), nie ~58.
+Konfliktów na końcach linii przy rebasie otwartych PR-ów **nie będzie**.
+Renormalizacja została mimo to wykonana jako osobny commit (`c552e38`), co
+zachowuje czytelność historii.
 
 **Bramka artefaktu musi failować przy braku `dist/`.** Test czytający `dist/client/**`
 przechodzi trywialnie, gdy katalog nie istnieje — nie ma czego znaleźć. To
@@ -681,31 +687,31 @@ linii.
 
 #### Automated
 
-- [x] 1.1 `npm run lint` zwraca zero błędów
-- [x] 1.2 `npm run check` nadal zwraca zero błędów
-- [x] 1.3 `npm run build` nadal przechodzi
-- [x] 1.4 `npm ls zod` nie zgłasza konfliktu wersji
-- [x] 1.5 Commit renormalizacyjny nie zawiera zmian semantycznych
+- [x] 1.1 `npm run lint` zwraca zero błędów — ba1a0e6
+- [x] 1.2 `npm run check` nadal zwraca zero błędów — ba1a0e6
+- [x] 1.3 `npm run build` nadal przechodzi — ba1a0e6
+- [x] 1.4 `npm ls zod` nie zgłasza konfliktu wersji — ba1a0e6
+- [x] 1.5 Commit renormalizacyjny nie zawiera zmian semantycznych — c552e38
 
 #### Manual
 
-- [x] 1.6 Formularz dodawania karty działa; błąd walidacji nie wysypuje wyspy React
-- [x] 1.7 Dashboard wyświetla listę kart zalogowanego usera
+- [x] 1.6 Formularz dodawania karty działa; błąd walidacji nie wysypuje wyspy React — ba1a0e6
+- [x] 1.7 Dashboard wyświetla listę kart zalogowanego usera — ba1a0e6
 
 ### Phase 2: Runner + guard środowiskowy
 
 #### Automated
 
-- [ ] 2.1 `npm test` uruchamia się i wykonuje test sanity
-- [ ] 2.2 Test sanity przechodzi: `SUPABASE_URL` widziany przez kod aplikacji wskazuje localhost
-- [ ] 2.3 Guard ubija przebieg przy nielokalnym `SUPABASE_URL`
-- [ ] 2.4 `npm run lint` nadal zwraca zero błędów
-- [ ] 2.5 `npm run check` obejmuje nowe pliki bez błędów
+- [x] 2.1 `npm test` uruchamia się i wykonuje test sanity
+- [x] 2.2 Test sanity przechodzi: `SUPABASE_URL` widziany przez kod aplikacji wskazuje localhost
+- [x] 2.3 Guard ubija przebieg przy nielokalnym `SUPABASE_URL`
+- [x] 2.4 `npm run lint` nadal zwraca zero błędów
+- [x] 2.5 `npm run check` obejmuje nowe pliki bez błędów
 
 #### Manual
 
-- [ ] 2.6 Komunikat guardu jest zrozumiały i wskazuje plik do poprawy
-- [ ] 2.7 `.env.test` nie pojawia się w `git status`
+- [x] 2.6 Komunikat guardu jest zrozumiały i wskazuje plik do poprawy
+- [x] 2.7 `.env.test` nie pojawia się w `git status`
 
 ### Phase 3: Izolacja danych między userami (Ryzyko #4)
 

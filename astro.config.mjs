@@ -5,6 +5,7 @@ import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import cloudflare from "@astrojs/cloudflare";
+import process from "node:process";
 
 // https://astro.build/config
 export default defineConfig({
@@ -13,7 +14,12 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
   },
-  adapter: cloudflare(),
+  // Vitest ustawia `resolve.external` dla środowiska SSR, co plugin Vite
+  // adaptera Cloudflare odrzuca jako niekompatybilne. Testy tej bazy nie
+  // dotykają runtime'u workerd (sprawdzają reguły bazy i kształt odpowiedzi
+  // endpointów), więc pod runnerem adapter jest zbędny. Poza Vitest — zawsze
+  // Cloudflare.
+  adapter: process.env.VITEST ? undefined : cloudflare(),
   env: {
     schema: {
       SUPABASE_URL: envField.string({ context: "server", access: "secret", optional: true }),

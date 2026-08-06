@@ -101,8 +101,10 @@ GitHub Secrets (build ich używa)
   na `../client`. Dziś nic nie wycieka (zweryfikowane na żywym wdrożeniu: 404), ale
   ktoś „porządkujący" konfig mógłby opublikować katalog serwerowy z sekretami.
   Świadomie poza zakresem.
-- **Renormalizacja skonfliktuje otwarte PR-y** #1 i #2. Konflikty będą wyłącznie na
-  końcach linii, ale wymagają rebase'u.
+- ~~**Renormalizacja skonfliktuje otwarte PR-y** #1 i #2.~~ **Nieaktualne
+  (2026-08-05):** `core.autocrlf=true` normalizuje przy commicie, więc repozytorium
+  od zawsze trzymało LF. Commit renormalizacyjny objął 16 plików, nie ~58 —
+  konfliktów przy rebasie nie będzie.
 - **Testy zostawiają konta w lokalnej bazie.** Sprzątanie wymagałoby klucza
   serwisowego, czyli wprowadzenia do suity poświadczeń omijających RLS — świadomie
   odrzucone. `db reset` czyści.
