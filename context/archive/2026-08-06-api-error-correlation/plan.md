@@ -96,4 +96,22 @@ phases"). `/10x-archive` zgłosi je jako miękkie ostrzeżenie; to sygnał, nie 
 
 #### Manual
 
-- [ ] 3.5 Smoke na wdrożonym środowisku — zablokowany: dodawanie fiszek na produkcji jest niesprawne z powodu zaległych migracji (osobna zmiana)
+- [x] 3.5 Smoke na wdrożonym środowisku — 2026-08-07, blokada zdjęta
+
+  Blokada miała dwie warstwy, nie jedną. Zaległe migracje były tylko pierwszą:
+  `npx supabase db push` dociągnął trzy brakujące (`20260609211146`,
+  `20260611183634`, `20260611183943`) i to niczego nie naprawiło — komunikat
+  zmienił się z „nie znam kolumny `question`" na „nie znam kolumny `back`".
+  Druga warstwa: wdrożony Worker pochodził z 2026-06-05, czyli sprzed `813c8d8`,
+  więc wysyłał `front`/`back`. Redeploy `main` (Version ID
+  `62a10af0-4715-4486-aef8-5edfff6a7f6d`) domknął sprawę.
+
+  Zweryfikowane na `10xcards30.turolmar1-775.workers.dev`: logowanie, zapis
+  fiszki, fiszka widoczna na liście. Sondy REST przed i po migracji potwierdziły
+  zmianę schematu od strony API (`generations` 404 → 200, `cards.front` 200 → 400).
+
+  **Czego to NIE weryfikuje:** korelacja z `946f825` nie jest jeszcze na
+  produkcji — wdrożony `main` ma redakcję błędu, ale nie identyfikator
+  odsyłający do logu. Ścieżka korelacji trafi na produkcję po scaleniu tego PR-a
+  i kolejnym deployu; wywołanie jej wymaga sprowokowania błędu serwera, więc nie
+  domknie się przy okazji zwykłego smoke'u.
