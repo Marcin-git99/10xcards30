@@ -16,5 +16,10 @@ export const POST: APIRoute = async (context) => {
     return context.redirect(`/auth/signin?error=${encodeURIComponent(error.message)}`);
   }
 
-  return context.redirect("/");
+  // Po zalogowaniu użytkownik trafia wprost do swoich fiszek, a nie na stronę
+  // powitalną, z której dashboard był tylko małym linkiem w rogu. Świadomie bez
+  // parametru powrotu (`?redirect=`): produkt ma dziś jeden ekran po
+  // zalogowaniu, więc taki parametr nie miałby czego obsłużyć, a wprowadzałby
+  // powierzchnię na otwarte przekierowanie.
+  return context.redirect("/dashboard");
 };
