@@ -89,7 +89,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ### S-01: First gated generation loop
 
-- **Outcome:** user może wkleić tekst źródłowy (min. 500 znaków), wygenerować paczkę 5 kart AI, przejrzeć każdą kartę (edytować Q/A, usunąć z paczki), zatwierdzić przez [Zatwierdź i przejdź do nauki] — zaakceptowane karty lądują w bazie z `source='ai'`, `generation_id` powiązanym z rekordem Generation, `leitner_box=1`, `next_review_at=now`; user jest przekierowany do sesji SRS (S-02).
+- **Outcome:** user może wkleić tekst źródłowy (500–5000 znaków), wygenerować paczkę 5 kart AI, przejrzeć każdą kartę (edytować Q/A, usunąć z paczki), zatwierdzić przez [Zatwierdź i przejdź do nauki] — zaakceptowane karty lądują w bazie z `source='ai'`, `generation_id` powiązanym z rekordem Generation, `leitner_box=1`, `next_review_at=now`; user jest przekierowany do sesji SRS (S-02).
 - **Change ID:** first-gated-generation
 - **PRD refs:** US-01, US-04, US-05, US-09, FR-001, FR-002, FR-003, FR-006, FR-007, FR-008, FR-009, FR-010, FR-011, FR-012, FR-013, FR-014, FR-027
 - **Prerequisites:** F-01 (pełny schemat DB), F-02 (Google OAuth)
