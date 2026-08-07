@@ -96,13 +96,14 @@ Studenci kierunków o wysokiej gęstości materiału (medycyna, prawo, ekonomia)
 
 ### US-04: Generate a flashcard batch from pasted source text
 
-- **Given** a signed-in user on the main screen with at least 500 characters of source text in the paste field
+- **Given** a signed-in user on the main screen with between 500 and 5000 characters of source text in the paste field
 - **When** they trigger [Generuj fiszki z AI]
 - **Then** within the latency target (p95 under 10 seconds, hard cutoff 30 seconds) the system returns a batch of exactly five question/answer cards and renders them in the post-generation review view
 
 #### Acceptance Criteria
 
 - If the source text contains fewer than 500 characters, the generation action is unavailable (or surfaces a clear minimum-length message).
+- If the source text exceeds 5000 characters, the generation action is unavailable and surfaces a clear maximum-length message; the text is never silently truncated, because a user who cannot see what was dropped cannot judge whether the resulting cards cover what they pasted.
 - If the request exceeds the hard cutoff or returns an invalid response, the user sees a friendly error and a retry action (see US-09).
 - The generated question/answer pairs are in the same language as the source text.
 
@@ -179,7 +180,7 @@ Studenci kierunków o wysokiej gęstości materiału (medycyna, prawo, ekonomia)
 ### Generation
 
 - FR-006: A signed-in user can paste source text into a single field on the main screen (placeholder: "Wklej kod lub dokumentację, z której chcesz się pouczyć"). Priority: must-have
-- FR-007: A signed-in user can trigger AI generation only when the source text contains at least 500 characters. Priority: must-have
+- FR-007: A signed-in user can trigger AI generation only when the source text contains at least 500 and at most 5000 characters. Priority: must-have
 - FR-008: A signed-in user triggering generation has the system request from the external LLM exactly 5 question/answer pairs derived from the pasted text, with the instruction that the pairs use the same language as the source text. Priority: must-have
 - FR-009: A signed-in user sees continuous in-progress feedback during a generation request, and interaction with the generation form is blocked until the request resolves. Priority: must-have
 - FR-010: A signed-in user receives the generated batch as exactly 5 editable question/answer cards in a review view after a successful generation. Priority: must-have
@@ -269,6 +270,6 @@ The choice of specific OAuth provider, identity-library vendor, and session-stor
 7. **Timezone handling for "10:00" copy.** — The "Następna powtórka jutro o ~10:00" copy is hardcoded local time; should it adapt to user timezone or remain a friendly default? Owner: user. Block: no.
 8. **Empty SRS session UX.** — When a signed-in user opens the product and has zero due cards, what do they see? An empty-state with the next due-card time? A redirect to the main screen? An invitation to generate a new batch? Owner: user. Block: no.
 9. **Confirmation dialog pattern.** — Deletion of a card and deletion of an account both require confirmation; the specific confirmation pattern (typed confirmation, modal, native browser confirm) is not specified. Owner: user (deferable to implementation). Block: no.
-10. **Maximum source text length.** — The minimum is 500 characters; no maximum is set. Is there an upper bound that should be communicated (and at what length does generation quality or cost become a concern)? Owner: user. Block: no.
+10. **Maximum source text length.** — RESOLVED 2026-08-07: **5000 characters**. The binding constraint is quality, not cost — a 2000-character call costs a fraction of a cent, but five cards drawn from 10 000 characters stop being coverage and become an arbitrary sample. At 5000 the ceiling is roughly 1000 characters per card and still admits a normal documentation section, so the gate rejects junk rather than ordinary use. Reflected in FR-007 and US-04. Owner: user. Block: no.
 11. **GDPR data portability (Article 20).** — Account deletion satisfies the right to be forgotten; data export (machine-readable copy of one's own data) is not in MVP. Should it be? Owner: user. Block: no.
 12. **Future OAuth providers.** — v2 candidates: second OAuth provider for the developer persona, email + password path for non-developer personas. Owner: user. Block: no.
