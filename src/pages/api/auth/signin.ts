@@ -15,7 +15,7 @@ export const POST: APIRoute = async (context) => {
     options: { redirectTo: `${origin}/api/auth/callback` },
   });
 
-  if (error || !data?.url) {
+  if (error || !data.url) {
     const message = error?.message ?? "Could not start Google sign-in";
     return context.redirect(`/auth/signin?error=${encodeURIComponent(message)}`);
   }
