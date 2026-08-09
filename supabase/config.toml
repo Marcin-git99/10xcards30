@@ -326,6 +326,13 @@ enabled = true
 client_id = ""
 # DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead:
 secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET)"
+# WYMAGANE i musi być JAWNE. Zmierzone na CLI 2.98.2: przy braku klucza ORAZ przy
+# `redirect_uri = ""` CLI nie emituje GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI, a GoTrue
+# odrzuca autoryzację błędem `validation_failed: Unsupported provider: missing
+# redirect URI`. Pusta wartość NIE oznacza tu „użyj domyślnego".
+# Wartość lokalna (<API_EXTERNAL_URL>/callback) — projekt hostowany konfiguruje
+# providera przez dashboard, nie przez ten plik.
+redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"
 # Start with false; flip to true ONLY if local Google sign-in fails with a nonce error (local-only).
 skip_nonce_check = false
 
