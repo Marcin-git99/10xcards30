@@ -43,3 +43,138 @@ jobs:
         env:
           SUPABASE_URL: http://127.0.0.1:54321
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+  # Bramka E2E. Osobny job, nie kolejny krok w `ci` — z dwóch powodów:
+  #
+  #  1. Inny sekret na tym samym nazwisku. `ci` buduje artefakt produkcyjny
+  #     sekretami repozytorium; E2E MUSI zbudować aplikację przeciw Supabase
+  #     stojącemu na tym runnerze, inaczej guard z e2e/helpers/env.ts ubije
+  #     przebieg (i słusznie — te testy zakładają konta i piszą wiersze).
+  #     Dwa różne buildy w jednym jobie kłóciłyby się o katalog `dist/`.
+  #  2. Równoległość. To najwolniejsza bramka w pipelinie; jako osobny job
+  #     biegnie obok `ci`, a nie po nim.
+  #
+  # Job jest BLOKUJĄCY: dług zimnego startu (test-plan.md §6.7) został domknięty
+  # bramką gotowości w e2e/global-setup.ts, zanim ta bramka trafiła do CI —
+  # czerwień znaczy tu awarię, nie hałas.
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx astro sync
+
+      # ── Przeglądarka ───────────────────────────────────────────────────
+      # Tylko chromium: playwright.config.ts definiuje jeden projekt
+      # przeglądarkowy, więc reszta silników to czysty koszt pobrania.
+      - name: Ustal wersję Playwrighta (klucz cache)
+        id: playwright-version
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache przeglądarek Playwrighta
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          # Wersja Playwrighta w kluczu, bo binarka przeglądarki jest przypięta
+          # do wersji pakietu — cache spod innej wersji jest bezużyteczny i
+          # `playwright install` i tak pobrałby swoje.
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
+
+      - name: Pobierz chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      # Cache trzyma binarkę przeglądarki, ale NIE biblioteki systemowe (te
+      # instaluje apt poza ~/.cache). Przy trafieniu w cache trzeba je dołożyć
+      # osobno, inaczej chromium nie wystartuje.
+      - name: Zależności systemowe chromium (przy trafieniu w cache)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      # ── Supabase na runnerze ───────────────────────────────────────────
+      # `supabase start` zamiast usług w kontenerach: stack wstaje z TEGO
+      # samego supabase/config.toml co lokalnie i sam nakłada migracje z
+      # supabase/migrations. W szczególności `[auth.email] enable_confirmations
+      # = false` przychodzi z pliku — bez tego `signUp()` w e2e/helpers/
+      # test-user.ts nie dostałby sesji.
+      #
+      # Jedyna różnica względem lokalnego: provider Google. W repozytorium jest
+      # `enabled = true` z pustym `client_id` (prawdziwy ID żyje wyłącznie w
+      # niezacommitowanej kopii u dewelopera), a przy pustym ID CLI nie wystawi
+      # stacka. Suite nie dotyka Google ani razu — sesja powstaje przez
+      # signUp/signInWithPassword — więc na runnerze providera po prostu gasimy.
+      # Patch celuje w blok, nie w plik: gdyby sekcja zmieniła kształt, krok
+      # pada tutaj z jasnym komunikatem, zamiast po cichu nie zrobić nic.
+      - name: Wyłącz providera Google na runnerze
+        run: |
+          awk '
+            /^\[/ { section = $0 }
+            section == "[auth.external.google]" && /^enabled[[:space:]]*=[[:space:]]*true[[:space:]]*$/ {
+              print "enabled = false"; patched = 1; next
+            }
+            { print }
+            END {
+              if (!patched) {
+                print "Nie znaleziono `enabled = true` w bloku [auth.external.google] — sekcja zmieniła kształt, popraw ten krok." > "/dev/stderr"
+                exit 1
+              }
+            }
+          ' supabase/config.toml > config.patched.toml
+          mv config.patched.toml supabase/config.toml
+
+      - name: Start Supabase
+        # Wyłączone usługi, których suite nie dotyka — oszczędzają pobranie
+        # obrazów. Zostają: postgres, kong, gotrue, postgrest (oraz vector i
+        # logflare, bo [analytics] w config.toml jest włączone).
+        run: npx supabase start -x studio,imgproxy,edge-runtime,mailpit,realtime,storage-api,postgres-meta
+
+      # SUPABASE_URL/KEY biorą się z uruchomionego stacka, nie z sekretów
+      # repozytorium. Powód jest twardy: e2e/helpers/env.ts odmawia startu,
+      # gdy URL nie wskazuje localhosta — i słusznie, bo te testy zakładają
+      # konta i piszą do bazy. ANON_KEY lokalnego stacka nie jest sekretem
+      # (podpisany domyślnym kluczem developerskim CLI, identyczny na każdej
+      # maszynie), więc nie ma tu czego chronić.
+      #
+      # Trafiają do GITHUB_ENV, a nie tylko do kroku z testami, bo ten sam
+      # zestaw musi zobaczyć `npm run build` uruchamiany przez `webServer`
+      # Playwrighta — build wypieka wartości `astro:env/server` do artefaktu.
+      - name: Wyeksportuj adres i klucz lokalnego Supabase
+        run: |
+          status=$(npx supabase status -o json)
+          echo "SUPABASE_URL=$(echo "$status" | jq -er .API_URL)" >> "$GITHUB_ENV"
+          echo "SUPABASE_KEY=$(echo "$status" | jq -er .ANON_KEY)" >> "$GITHUB_ENV"
+
+      # `.dev.vars`, nie tylko zmienne środowiskowe — i to nie jest nadmiarowość.
+      # `astro preview` z adapterem Cloudflare uruchamia workerd przez
+      # wranglera, a worker NIE dziedziczy `process.env` runnera: widzi
+      # wyłącznie swoje bindingi. Adapter dostarcza je kopiując ten plik do
+      # `dist/server/.dev.vars` przy buildzie (test-plan.md §6.6 i
+      # test/hermetic/build-artifact.test.ts opisują tę samą ścieżkę od strony
+      # wycieku sekretu). Bez tego pliku aplikacja wstaje bez konfiguracji
+      # Supabase, `createClient` zwraca null i cały suite pada na 503 —
+      # awaria wyglądająca na produktową, a będąca brakiem konfiguracji.
+      - name: Skonfiguruj runtime aplikacji (.dev.vars dla workerd)
+        run: |
+          printf 'SUPABASE_URL=%s\nSUPABASE_KEY=%s\n' "$SUPABASE_URL" "$SUPABASE_KEY" > .dev.vars
+
+      # Playwright sam buduje aplikację i podnosi `astro preview`
+      # (playwright.config.ts → webServer), a e2e/global-setup.ts nie dopuszcza
+      # testów, dopóki każda trasa nie odpowie zgodnie z kontraktem trzy razy
+      # z rzędu.
+      - name: Testy E2E
+        run: npm run test:e2e
+
+      - name: Raport z przebiegu
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

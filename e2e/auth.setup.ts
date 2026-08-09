@@ -1,4 +1,4 @@
-import { test as setup, expect, request as playwrightRequest } from "@playwright/test";
+import { test as setup, expect } from "@playwright/test";
 import { waitForIslandsHydrated } from "./helpers/island";
 import { STORAGE_STATE, authenticatedClient, createTestUser, saveTestUser, sessionCookies } from "./helpers/test-user";
 
@@ -14,45 +14,11 @@ import { STORAGE_STATE, authenticatedClient, createTestUser, saveTestUser, sessi
 setup("authenticate", async ({ context, page, baseURL }) => {
   const origin = baseURL ?? "http://localhost:4321";
 
-  // ── Warunek wstępny: bramka auth naprawdę żyje ─────────────────────────
-  // `webServer` Playwrighta uznaje serwer za gotowy, gdy dostanie JAKĄKOLWIEK
-  // odpowiedź z `/`. Zmierzone na zimnym starcie: przez pierwsze ~2 s
-  // `astro dev` odpowiada, ale middleware jeszcze nie jest podpięte — żądanie
-  // anonimowe o `/library` NIE dostaje wtedy przekierowania. Testy startujące
-  // w tym oknie widziały anonima na chronionym ekranie i zgłaszały
-  // materializację Ryzyka 3, której nie było.
-  //
-  // Sondujemy `/dashboard`, a NIE `/library`, i czekamy właśnie na `302`.
-  //
-  // Dlaczego akurat tak. Słabszy warunek („jakikolwiek prawidłowy status")
-  // nie wystarcza: w oknie startowym `/library` potrafi zwrócić `200`, czyli
-  // stronę wyrenderowaną bez middleware — sonda przyjęłaby jako „gotowe"
-  // dokładnie ten stan, który jest awarią.
-  //
-  // Dlaczego to nie duplikuje `auth-gate.spec.ts`: obie trasy chroni to samo
-  // middleware, ale mutacja użyta przy celowym psuciu Ryzyka 3 osłabia bramkę
-  // dla `/library` i zostawia `/dashboard` nietknięte. Sonda dowodzi więc, że
-  // middleware ŻYJE, nie orzekając o konfiguracji trasy pod testem — mutacja
-  // nadal zabija dokładnie jeden test, jak wymaga `lessons.md`.
-  const probe = await playwrightRequest.newContext({ baseURL: origin });
-  try {
-    await expect
-      .poll(async () => (await probe.get("/dashboard", { maxRedirects: 0 })).status(), {
-        timeout: 90_000,
-        message:
-          "middleware nie odbija jeszcze anonimowych żądań z /dashboard — serwer zimny albo bramka auth rozkonfigurowana",
-      })
-      .toBe(302);
-
-    // Rozgrzewka pozostałych tras anonimowych, na które wchodzi
-    // `auth-gate.spec.ts`: odbicie z /library i strona docelowa odbicia.
-    // Sonda wyżej pilnuje /dashboard, więc te dwie trzeba rozgrzać osobno.
-    await probe.get("/library", { maxRedirects: 0 });
-    await probe.get("/auth/signin");
-  } finally {
-    await probe.dispose();
-  }
-
+  // Warstwa HTTP jest już rozgrzana i sprawdzona: `e2e/global-setup.ts`
+  // wymusza trzy czyste przejścia po każdej trasie (łącznie z `302` dla
+  // anonima na trasach chronionych), zanim Playwright dopuści ten projekt.
+  // Tutaj zostaje wyłącznie to, czego nie da się rozgrzać bez sesji i bez
+  // przeglądarki: hydratacja wysp i uwierzytelniona ścieżka `POST /api/cards`.
   const user = await createTestUser("session");
   saveTestUser(user);
 
@@ -61,8 +27,19 @@ setup("authenticate", async ({ context, page, baseURL }) => {
   // Dowód, że wstrzyknięta sesja jest prawdziwa dla aplikacji: middleware
   // przepuszcza na chronioną trasę zamiast odbić na /auth/signin.
   // Asercja na stan końcowy, nie na kod odpowiedzi (test-plan.md §2, Ryzyko 1).
+  //
+  // Komunikat, bo ta jedna asercja pada też z powodu, który nie ma nic
+  // wspólnego z sesją: aplikacja zbudowana BEZ konfiguracji Supabase odbija
+  // wszystkich tak samo. `astro preview` idzie przez workerd, a worker nie
+  // dziedziczy `process.env` — czyta wyłącznie `.dev.vars` skopiowane do
+  // `dist/server/` przy buildzie. Zweryfikowane eksperymentalnie: sam
+  // `SUPABASE_URL`/`SUPABASE_KEY` w powłoce nie wystarcza, suite pada dokładnie
+  // tutaj. Bez tej wskazówki brak konfiguracji runnera wygląda na regresję sesji.
   await page.goto("/dashboard");
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(
+    page,
+    "sesja wstrzyknięta, a middleware i tak odbija — sprawdź, czy aplikacja została zbudowana z SUPABASE_URL/SUPABASE_KEY (lokalnie `.dev.vars`, na CI krok „Skonfiguruj runtime aplikacji”)",
+  ).toHaveURL(/\/dashboard$/);
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
 
   // Rozgrzewka: zapłać tu za zimną kompilację, nie w testach.
