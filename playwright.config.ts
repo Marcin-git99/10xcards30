@@ -14,11 +14,19 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : [["list"]],
 
-  // Dev server Astro kompiluje trasy API przy pierwszym trafieniu — zmierzone
-  // 2,4 s dla `POST /api/cards`, a pierwszy strzał po starcie bywa wolniejszy.
-  // Domyślne 5 s dawało losowe czerwienie. To nie jest `waitForTimeout`:
-  // asercje nadal czekają na STAN i kończą, gdy tylko nastąpi — rośnie tylko
-  // górny budżet.
+  // Dev server Astro kompiluje trasy na żądanie, a `webServer` czeka tylko na
+  // odpowiedź z `/` — więc pierwszy przebieg po zmianie kodu płaci za
+  // kompilację `/dashboard`, `/library` i `/auth/signin` w trakcie testów.
+  // Zmierzone: 2,4 s dla samego `POST /api/cards`, a zimny przebieg całości
+  // przekraczał domyślne 30 s na test i 5 s na asercję — dawało to flake
+  // zależny wyłącznie od tego, czy serwer był już rozgrzany.
+  //
+  // To NIE jest `waitForTimeout`: asercje nadal czekają na STAN i kończą, gdy
+  // tylko nastąpi. Rośnie wyłącznie górny budżet cierpliwości.
+  //
+  // Na CI ten koszt znika, jeśli suite pójdzie przeciw zbudowanej aplikacji
+  // (`astro build && astro preview`) zamiast przeciw dev serverowi.
+  timeout: 90_000,
   expect: { timeout: 15_000 },
 
   use: {

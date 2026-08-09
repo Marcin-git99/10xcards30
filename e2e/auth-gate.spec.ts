@@ -1,5 +1,4 @@
 import { test, expect } from "@playwright/test";
-import { waitForIslandsHydrated } from "./helpers/island";
 import { authenticatedClient, readTestUser } from "./helpers/test-user";
 
 /**
@@ -39,21 +38,22 @@ test("signed-out visitor is bounced from /library and sees none of the owner's c
   const question = uniqueQuestion();
   const answer = "Treść, która nie ma prawa wyciec";
 
-  // ── Setup: właściciel zakłada fiszkę ───────────────────────────────────
+  // ── Setup: właściciel ma fiszkę ────────────────────────────────────────
   // Bez tego kroku test jest pusty w sensie dowodowym: „anonim nie widzi
   // fiszki" przechodzi trywialnie, gdy żadnej fiszki nie ma. Żeby dowieść,
   // że bramka chroni TREŚĆ, treść musi istnieć.
-  await page.goto("/dashboard");
-  await waitForIslandsHydrated(page);
-  await page.getByRole("textbox", { name: "Question" }).fill(question);
-  await page.getByRole("textbox", { name: "Answer" }).fill(answer);
-  await page.getByRole("button", { name: "Add card" }).click();
-
-  // Poczekaj, aż zapis się domknie, ZANIM opuścisz stronę. `CreateCardForm`
-  // dokłada fiszkę do listy dopiero po `res.ok`, więc widoczność jest tu
-  // dowodem zakończonego POST-a. Bez tego nawigacja na /library potrafi
-  // anulować żądanie w locie — flake bez związku z badanym ryzykiem.
-  await expect(page.getByRole("listitem").filter({ hasText: question })).toBeVisible();
+  //
+  // Zakładamy ją przez API, nie przez formularz — ta sama zasada co przy
+  // logowaniu: setup, który nie jest przedmiotem testu, nie idzie przez UI.
+  // Ścieżkę zapisu przez formularz udowadnia `seed.spec.ts`; powtarzanie jej
+  // tutaj kosztowało ~10 s (hydratacja + POST + render) i wypychało test poza
+  // limit czasu, nie dokładając ani jednej asercji o bramce dostępu.
+  // `user_id` jawnie — kolumna nie ma wartości domyślnej, a polityka INSERT
+  // wymaga `user_id = auth.uid()` (tak samo robi `src/pages/api/cards.ts`).
+  const testUser = readTestUser();
+  const owner = await authenticatedClient(testUser);
+  const { error: seedError } = await owner.from("cards").insert({ question, answer, user_id: testUser.userId });
+  expect(seedError?.message, "setup: nie udało się założyć fiszki właściciela").toBeUndefined();
 
   // Właściciel faktycznie widzi swoją fiszkę na chronionym ekranie. To jest
   // też druga połowa Ryzyka 3 („zalogowany user jest odbijany od własnych
