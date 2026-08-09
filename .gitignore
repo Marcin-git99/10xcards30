@@ -34,6 +34,9 @@ playwright-report/
 test-results/
 blob-report/
 
+# playwright-cli — snapshoty drzewa dostepnosci zapisywane przy eksploracji
+.playwright-cli/
+
 # course tooling — keep local, never publish to remote
 .claude/skills/
 .claude/prompts/
