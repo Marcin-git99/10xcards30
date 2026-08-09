@@ -3,6 +3,29 @@ import { createClient } from "@/lib/supabase";
 
 export const prerender = false;
 
+/**
+ * Zamienia parę (error, error_description) z OAuth na komunikat dla użytkownika.
+ *
+ * Kody, które realnie przychodzą z Google przez GoTrue:
+ *  - "access_denied"          — użytkownik kliknął „Odmów" na ekranie zgody (NIE awaria)
+ *  - "server_error"           — błąd po stronie providera
+ *  - "temporarily_unavailable"— provider chwilowo niedostępny
+ * `description` bywa pustym stringiem — wtedy nie ma z czego budować komunikatu.
+ *
+ * Decyzja produktowa (Marcin, 2026-08-09): odmowa zgody dostaje własny, zrozumiały
+ * komunikat, bo to świadomy wybór użytkownika, a nie awaria. Sprawdzenie kodu idzie
+ * PRZED `description` — Google bywa, że dosyła własny opis przy `access_denied`,
+ * a wtedy nasz komunikat by przegrał. Pozostałe kody nadal pokazują opis providera
+ * (lub sam kod, gdy opis jest pusty).
+ */
+function describeOAuthError(code: string, description: string): string {
+  if (code === "access_denied") {
+    return "You denied access";
+  }
+
+  return description || code;
+}
+
 export const GET: APIRoute = async (context) => {
   const url = new URL(context.request.url);
   const code = url.searchParams.get("code");
@@ -10,7 +33,12 @@ export const GET: APIRoute = async (context) => {
   const errorDescription = url.searchParams.get("error_description");
 
   if (error) {
-    const message = errorDescription ?? error;
+    // Uwaga na `||` vs `??` wewnątrz describeOAuthError: przy odmowie zgody GoTrue
+    // wysyła `error=access_denied` z PUSTYM `error_description`. Pusty string nie
+    // jest nullish, więc `??` przepuszczał go dalej i użytkownik dostawał
+    // `/auth/signin?error=` bez treści. Dla parametrów query pusty string znaczy
+    // „brak", nie „wartość".
+    const message = describeOAuthError(error, errorDescription ?? "");
     return context.redirect(`/auth/signin?error=${encodeURIComponent(message)}`);
   }
 
