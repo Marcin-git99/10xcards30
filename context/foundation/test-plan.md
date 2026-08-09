@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-08-02 (zmiana kolejności faz w §3)
+> Last updated: 2026-08-09 (warstwa E2E: §4 stack, §5 bramka, §6.7 wzorzec)
 
 ## 1. Strategy
 
@@ -135,7 +135,7 @@ manifeście i w dokumentacji dostępnej przez MCP w bieżącej sesji.
 | unit + integration      | Vitest                                        | do przypięcia w Phase 1 | integracja przez `getViteConfig()` z `astro/config`; **Astro 6 wymaga `environment: 'node'`** — renderowanie komponentów `.astro` w środowiskach klienckich Vitest nie jest już dozwolone                                                            |
 | komponenty `.astro`     | Container API (Astro)                         | eksperymentalne         | dostępne, ale poza zakresem tego rolloutu — §7 wyklucza testowanie warstwy prezentacji                                                                                                                                                               |
 | API mocking             | brak — patrz Phase 2                          | —                       | polityka do ustalenia w researchu Phase 2; domyślnie mockować wyłącznie na granicy sieci, nigdy modułów wewnętrznych                                                                                                                                 |
-| e2e                     | kandydat, decyzja w Phase 1                   | —                       | uzasadnione tylko jeśli sesji z Ryzyka 1 nie da się złożyć na warstwie integracyjnej; logowanie przez zewnętrznego dostawcę jest kosztowne do zautomatyzowania                                                                                       |
+| e2e                     | Playwright                                    | 1.62.1 (2026-08-09)     | Sesja wstrzykiwana programowo klientem `@supabase/ssr` — po F-02 formularz logowania prowadzi wyłącznie przez Google, więc logowanie przez UI odpada jako zależność testów. Zakres świadomie wąski, patrz §6.7                                       |
 | accessibility           | brak — poza zakresem MVP                      | —                       | PRD §Open Questions 3 nie ustala poziomu dostępności                                                                                                                                                                                                 |
 | (opcjonalnie) AI-native | Claude Browser (in-app) — checked: 2026-08-02 | n/a                     | **Kiedy NIE używać:** gdy awaria jest wykrywalna deterministycznym testem integracyjnym. Warstwa uzasadniona wyłącznie do ręcznej weryfikacji złożonej ścieżki logowania na wdrożonym środowisku, gdy runtime edge zachowuje się inaczej niż lokalny |
 
@@ -155,15 +155,16 @@ Pełny zestaw bramek, które muszą przejść, zanim zmiana trafi na produkcję.
 „Wymagana po §3 Phase N" oznacza, że bramka zaczyna obowiązywać po
 wylądowaniu tej fazy rolloutu; wcześniej ma status planowanej.
 
-| Bramka                               | Gdzie                    | Wymagana?                                | Co łapie                                             |
-| ------------------------------------ | ------------------------ | ---------------------------------------- | ---------------------------------------------------- |
-| typecheck (`astro check`)            | lokalnie                 | wymagana                                 | dryf typów                                           |
-| lint                                 | lokalnie + CI            | wymagana (od §3 Phase 1)                 | dryf składniowy i stylistyczny                       |
-| build                                | CI                       | wymagana (od §3 Phase 1)                 | błędy kompilacji i konfiguracji                      |
-| testy hermetyczne (`test:hermetic`)  | lokalnie + CI            | wymagana (od §3 Phase 1)                 | regresje logiki niewymagające bazy, wyciek sekretu   |
-| testy integracyjne (`test:integration`) | lokalnie, ad hoc      | wymagana przed merge (poza CI)           | regresje reguł bazy — RLS, constrainty, schemat      |
-| pre-commit (husky + lint-staged)     | lokalnie                 | wymagana                                 | formatowanie i podstawowy lint na plikach w commicie |
-| ręczny smoke na wdrożonym środowisku | między merge a produkcją | zalecana                                 | awarie specyficzne dla runtime'u edge (Ryzyko 1)     |
+| Bramka                                  | Gdzie                    | Wymagana?                      | Co łapie                                                                |
+| --------------------------------------- | ------------------------ | ------------------------------ | ----------------------------------------------------------------------- |
+| typecheck (`astro check`)               | lokalnie                 | wymagana                       | dryf typów                                                              |
+| lint                                    | lokalnie + CI            | wymagana (od §3 Phase 1)       | dryf składniowy i stylistyczny                                          |
+| build                                   | CI                       | wymagana (od §3 Phase 1)       | błędy kompilacji i konfiguracji                                         |
+| testy hermetyczne (`test:hermetic`)     | lokalnie + CI            | wymagana (od §3 Phase 1)       | regresje logiki niewymagające bazy, wyciek sekretu                      |
+| testy integracyjne (`test:integration`) | lokalnie, ad hoc         | wymagana przed merge (poza CI) | regresje reguł bazy — RLS, constrainty, schemat                         |
+| testy E2E (`test:e2e`)                  | lokalnie, ad hoc         | zalecana przed merge           | regresje na ścieżce przeglądarka → ciasteczka → middleware → SSR → baza |
+| pre-commit (husky + lint-staged)        | lokalnie                 | wymagana                       | formatowanie i podstawowy lint na plikach w commicie                    |
+| ręczny smoke na wdrożonym środowisku    | między merge a produkcją | zalecana                       | awarie specyficzne dla runtime'u edge (Ryzyko 1)                        |
 
 Dwa fakty, które Phase 1 musiała naprawić, zanim ta tabela zaczęła cokolwiek
 znaczyć — **oba naprawione 2026-08-06**:
@@ -255,7 +256,8 @@ Karm stub kształtem zdjętym z żywej bazy, nie wymyślonym:
 const REAL_DB_ERROR = {
   code: "23514",
   message: 'new row for relation "cards" violates check constraint "cards_source_check"',
-  details: null, hint: null,
+  details: null,
+  hint: null,
 };
 ```
 
@@ -287,10 +289,10 @@ nie z testowanej implementacji.
 
 **Domyślna warstwa** wynika z tego, czego wymaga uruchomienie, nie z etykiety:
 
-| Co sprawdzasz | Katalog | Wymaga |
-|---|---|---|
-| reguły bazy, kaskady, constrainty | `test/integration/` | działającego Supabase |
-| gałęzie błędu nieosiągalne przez HTTP, artefakt builda | `test/hermetic/` | tylko `dist/` |
+| Co sprawdzasz                                          | Katalog             | Wymaga                |
+| ------------------------------------------------------ | ------------------- | --------------------- |
+| reguły bazy, kaskady, constrainty                      | `test/integration/` | działającego Supabase |
+| gałęzie błędu nieosiągalne przez HTTP, artefakt builda | `test/hermetic/`    | tylko `dist/`         |
 
 `npm run test:hermetic` idzie na CI, `npm run test:integration` zostaje bramką
 ad hoc (§4). Ten podział jest też podziałem w `.github/workflows/ci.yml`.
@@ -339,9 +341,64 @@ Pułapki środowiskowe, które kosztowały najwięcej czasu:
   normalizuje przy commicie, więc repozytorium od zawsze trzymało LF —
   na Linuksie tych 1039 błędów nigdy nie było. `.gitattributes` z `eol=lf`
   wyrównuje drzewo robocze.
-- **Bramka artefaktu celuje w `dist/client/**`, nie w `dist/`.** Sekret
-  legalnie siedzi w `dist/server/.dev.vars`, który nie jest publikowany
-  (adapter nadpisuje `assets.directory` na `../client`).
+- **Bramka artefaktu celuje w podkatalog klienta, nie w całe `dist/`.** Glob to
+  `dist/client/` z dwiema gwiazdkami. Sekret legalnie siedzi w
+  `dist/server/.dev.vars`, który nie jest publikowany (adapter nadpisuje
+  `assets.directory` na `../client`).
+
+### 6.7 Dodanie testu E2E
+
+Wzorzec: `e2e/seed.spec.ts`. Pomocniki: `e2e/helpers/`. Uruchomienie:
+`npm run test:e2e`, pojedynczy spec `npx playwright test <nazwa>`.
+
+**Zakres jest świadomie wąski.** Zasada „koszt × sygnał" z §1 obowiązuje tu
+mocniej niż gdziekolwiek: E2E jest najwolniejszą i najbardziej kruchą warstwą.
+Dziś pokryte są dwa ryzyka i nic więcej — Ryzyko 1 (druga połowa: dane i sesja
+przeżywają odświeżenie) oraz Ryzyko 3 (bramka strony). Zanim dopiszesz kolejny
+test, sprawdź, czy warstwa integracyjna nie udowodni tego taniej.
+
+**Czego E2E tutaj NIE pokryje.** Pętla powrotna z Google OAuth — czyli ta część
+Ryzyka 1, która nadała mu wagę Wysoki × Wysoki — pozostaje poza zasięgiem, bo
+wymagałaby automatyzowania cudzego dostawcy tożsamości. Zostaje przy ręcznym
+smoke'u z §5. Bramka API (druga połowa Ryzyka 3) to kontrakt endpointu i
+należy do `test/integration/`, nie tutaj.
+
+**Uwierzytelnianie z pominięciem UI.** Po F-02 `POST /api/auth/signin` ignoruje
+e-mail i hasło i przekierowuje do Google, więc logowanie przez formularz nie
+może być zależnością testów. `e2e/auth.setup.ts` zakłada świeże konto na każdy
+przebieg i składa ciasteczka tym samym klientem `@supabase/ssr`, którego używa
+aplikacja — dzięki temu format i podział tokenu na fragmenty pozostają zgodne z
+produkcyjnymi. Stan lądowuje w `playwright/.auth/` (gitignored — zawiera żywy
+token).
+
+**Wyspy Astro hydratują się asynchronicznie.** To najdroższa pułapka tej
+warstwy. Do zakończenia hydratacji pole formularza przyjmuje tekst do DOM, ale
+nie do stanu Reacta — walidacja widzi pustkę przy widocznie wypełnionym
+formularzu, a screenshot z awarii wprowadza w błąd. Każdy test dotykający
+formularza musi zacząć od `waitForIslandsHydrated(page)`.
+
+**Sprzątanie ma trzy warstwy**, bo aplikacja nie ma UI do kasowania fiszek:
+unikalny prefiks w treści (kolizje), `afterEach` kasujący klientem właściciela
+(akumulacja), świeże konto na przebieg (siatka po padniętym teście). Klucza
+serwisowego nie używamy — omijałby RLS, czyli warstwę, której te testy bronią.
+
+**Budżet czasu, nie `waitForTimeout`.** `expect.timeout` to 15 s, bo dev server
+Astro kompiluje trasy przy pierwszym trafieniu (zmierzone 2,4 s dla
+`POST /api/cards`, domyślne 5 s dawało losowe czerwienie). Asercje nadal czekają
+na stan i kończą, gdy tylko nastąpi.
+
+**Celowe psucie samo wymaga weryfikacji.** Osłabiaj regułę, nie usuwaj jej
+(patrz `lessons.md`). I potwierdź niezależnym kanałem, że zepsucie faktycznie
+dotarło do uruchomionej aplikacji: cudzy dev server (inna sesja, inny terminal)
+potrafi trzymać stary moduł `src/middleware.ts`, przez co test zostaje zielony i
+fałszywie wygląda na pozbawiony zębów. Wymuś świeży proces na osobnym porcie:
+
+```powershell
+$env:E2E_BASE_URL="http://localhost:4322"; npx playwright test
+```
+
+**E2E nie jest jeszcze wpięte w CI.** `.github/workflows/ci.yml` nie uruchamia
+`test:e2e` — bramka z §5 jest dziś lokalna i ad hoc.
 
 ## 7. What We Deliberately Don't Test
 
@@ -370,8 +427,8 @@ podstaw założenie.
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-08-02
-- Stack versions last verified: 2026-08-02
+- Strategy (§1–§5) last reviewed: 2026-08-09 (§4 e2e: kandydat → Playwright 1.62.1; §5: bramka `test:e2e`)
+- Stack versions last verified: 2026-08-09
 - AI-native tool references last verified: 2026-08-02
 
 Refresh (`/10x-test-plan --refresh`) when:
