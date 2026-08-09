@@ -59,10 +59,7 @@ export default function LibraryView({ initialCards, loadError = false }: Props) 
       ) : (
         <ul className="space-y-3">
           {cards.map((card) => (
-            <li
-              key={card.id}
-              className="rounded-xl border border-white/10 bg-white/5 p-4 text-white"
-            >
+            <li key={card.id} className="rounded-xl border border-white/10 bg-white/5 p-4 text-white">
               <div className="mb-2">
                 <SourceBadge source={card.source} />
               </div>
