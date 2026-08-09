@@ -382,23 +382,80 @@ unikalny prefiks w treści (kolizje), `afterEach` kasujący klientem właścicie
 (akumulacja), świeże konto na przebieg (siatka po padniętym teście). Klucza
 serwisowego nie używamy — omijałby RLS, czyli warstwę, której te testy bronią.
 
-**Budżet czasu, nie `waitForTimeout`.** `expect.timeout` to 15 s, bo dev server
-Astro kompiluje trasy przy pierwszym trafieniu (zmierzone 2,4 s dla
-`POST /api/cards`, domyślne 5 s dawało losowe czerwienie). Asercje nadal czekają
-na stan i kończą, gdy tylko nastąpi.
+**Zimny start serwera to jedyna przyczyna niestabilności tej warstwy.** Droga do
+tego ustalenia była kręta i warto ją znać, bo trzy pośrednie hipotezy brzmiały
+przekonująco, a każda była fałszywa. Dane z tego samego kodu i tych samych
+testów:
+
+| Warunek                                         | Wynik       |
+| ----------------------------------------------- | ----------- |
+| świeży serwer na każdy przebieg (`astro dev`)   | 6 / 8       |
+| świeży serwer na każdy przebieg (build+preview) | 3 / 4       |
+| **rozgrzany serwer, 10 przebiegów**             | **10 / 10** |
+
+Rozstrzygający był ostatni wiersz: pięć przebiegów na jednym workerze i pięć na
+dwóch, wszystkie zielone. To obaliło naraz hipotezę o równoległości (workers) i
+o trybie serwera (dev vs build) — koreluje **wyłącznie** świeżość procesu.
+
+Praktyczny wniosek: **rozgrzewka w `e2e/auth.setup.ts` musi obejmować każdą
+trasę, której dotykają testy.** Niekompletna rozgrzewka to nie połowa
+zabezpieczenia, tylko brak zabezpieczenia — zimna zostaje ta trasa, na której
+akurat wypadnie pierwsze trafienie. Dziś rozgrzewane są: `/library` anonimowo
+(sonda), `/auth/signin`, `/dashboard` z hydratacją, `/library` z hydratacją oraz
+`POST /api/cards`. Dokładając test dotykający nowej trasy, **dopisz ją tutaj**.
+
+Objawy zimnego startu bywają mylące i wyglądają jak materializacja ryzyka:
+anonim dosięgający `/library` (pięć pierwszych żądań zwraca status `0`, czyli
+odpowiedź niebędącą prawidłowym HTTP, i **nie** przekierowuje), „element(s) not
+found" po `reload()` (fiszka nie zdążyła powstać na zimnej trasie API),
+przekroczony budżet hydratacji. Zanim uznasz taki wynik za buga produktu,
+sprawdź, czy trasa była rozgrzana.
+
+**Tryb serwera to osobna decyzja, nie lekarstwo na flake.** Domyślnie idziemy
+przeciw buildowi — nie dlatego, że usuwa niestabilność (pomiar wyżej pokazuje,
+że nie usuwa), tylko dlatego, że odcina klasę „stary serwer serwuje stary kod"
+(`reuseExistingServer` wyłączone) i skraca okno zimnego startu. `E2E_DEV=1`
+wraca na dev server dla szybszej pętli przy **pisaniu** testów.
+
+**Budżety czasu to nie `waitForTimeout`.** Asercje nadal czekają na stan i
+kończą, gdy tylko nastąpi; rośnie wyłącznie górny limit cierpliwości. Liczby
+pochodzą z pomiaru, nie z wyczucia: hydratacja na buildzie w świeżym kontekście
+to **330–687 ms** (pięć prób), więc domyślne 30 s w `waitForIslandsHydrated`
+jest ponad czterdziestokrotnym zapasem na zimne wyjątki.
 
 **Celowe psucie samo wymaga weryfikacji.** Osłabiaj regułę, nie usuwaj jej
 (patrz `lessons.md`). I potwierdź niezależnym kanałem, że zepsucie faktycznie
-dotarło do uruchomionej aplikacji: cudzy dev server (inna sesja, inny terminal)
-potrafi trzymać stary moduł `src/middleware.ts`, przez co test zostaje zielony i
-fałszywie wygląda na pozbawiony zębów. Wymuś świeży proces na osobnym porcie:
-
-```powershell
-$env:E2E_BASE_URL="http://localhost:4322"; npx playwright test
-```
+dotarło do uruchomionej aplikacji — inaczej wyciągniesz wniosek odwrotny do
+prawdziwego. Przejechaliśmy to: cudzy dev server z innej sesji trzymał stary
+moduł `src/middleware.ts`, test został zielony i fałszywie wyglądał na
+pozbawiony zębów; ujawniło to jedno żądanie HTTP obok Playwrighta. Z tego samego
+powodu `reuseExistingServer` jest **wyłączone** w trybie buildu — zastany proces
+serwuje starą kompilację.
 
 **E2E nie jest jeszcze wpięte w CI.** `.github/workflows/ci.yml` nie uruchamia
 `test:e2e` — bramka z §5 jest dziś lokalna i ad hoc.
+
+**⚠️ ZNANY DŁUG: ~25% czerwieni przy zimnym starcie serwera.** Świadomie
+przyjęty 2026-08-09, nie przeoczony. Stan faktyczny:
+
+- Awaria **nie leży w asercjach**. Oba testy przeszły celowe psucie — padają,
+  gdy zepsuć chronione zachowanie, i to zweryfikowano po każdej przebudowie.
+- Przyczyna jest zidentyfikowana i zawężona do jednej: zimny start procesu
+  serwera (patrz tabela pomiarów wyżej). Rozgrzewka w `auth.setup.ts` zbija
+  częstość, ale jej nie zeruje.
+- **Obejście jest znane i zmierzone**: przeciw rozgrzanemu serwerowi 10/10.
+  Uruchamiając suite kilkukrotnie, wystartuj serwer raz i celuj w niego
+  (`E2E_DEV=1` plus ręcznie odpalony `npm run preview -- --port N`).
+
+Dlaczego przyjęte, a nie domknięte: to bramka lokalna, uruchamiana ad hoc przed
+merge, a nie automat blokujący pipeline — koszt fałszywej czerwieni ponosi
+człowiek, który i tak patrzy na wynik. Pogoń za resztą weszła w fazę malejących
+zwrotów (pięć hipotez, cztery obalone pomiarem).
+
+**Ten dług musi zostać domknięty PRZED wpięciem E2E do CI.** Tam fałszywa
+czerwień blokuje merge i uczy zespół ignorować czerwone przebiegi, co jest
+gorsze niż brak testu. Kandydat na rozwiązanie: `globalSetup` odpytujący każdą
+trasę aż do stabilnych odpowiedzi, zanim Playwright dopuści projekt `setup`.
 
 ## 7. What We Deliberately Don't Test
 

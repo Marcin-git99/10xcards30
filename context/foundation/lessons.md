@@ -43,3 +43,17 @@
 - **Problem**: Kod, który miał tę asercję zazielenić (polityki RLS, redakcja błędu), istniał od poprzednich slice'ów. Test byłby zielony w chwili napisania — kroku RED nie było i nie mogło być. „Potrafię nazwać czerwony test" jest warunkiem koniecznym, nie wystarczającym.
 - **Rule**: Before labelling a phase TDD, check that the production code is genuinely absent — not just that you can phrase the assertion. For tests covering existing code, the equivalent of RED is a **mutation step**: break the implementation, watch the test go red, restore. Make that an explicit success criterion.
 - **Applies to**: plan, implement, tdd
+
+## Confirm a deliberate break actually reached the running system
+
+- **Context**: Krok VERIFY w E2E — celowe psucie kodu produkcyjnego, żeby sprawdzić, czy test ma zęby. Aplikacja serwowana przez długo żyjący dev server.
+- **Problem**: Osłabienie `PROTECTED_ROUTES` w `src/middleware.ts` nie dotarło do aplikacji, bo dev server z **innej sesji** trzymał stary moduł. Test został zielony. Narzucający się wniosek — „asercja niczego nie pilnuje, wróć do GENERATE" — był dokładnie odwrotny do prawdy i prowadził do przepisania działającego testu.
+- **Rule**: A green test after a deliberate break is NOT evidence the assertion is toothless until you confirm the break reached the running system. Verify through a channel independent of the test runner (one HTTP request is enough). Never reuse a server process you did not start for break verification — disable `reuseExistingServer` or use a fresh port.
+- **Applies to**: implement, tdd, e2e, impl-review
+
+## Environment artifacts impersonate risk materialization — measure before concluding
+
+- **Context**: Stabilizacja suite'u E2E przeciw aplikacji renderowanej serwerowo (Astro SSR, trasy i wyspy kompilowane/inicjalizowane na żądanie).
+- **Problem**: Testy raportowały „anonim dosięgnął chronionego ekranu" i „dane nie przeżyły odświeżenia" — czyli dosłowne brzmienie Ryzyk 3 i 1. Żadne z nich nie było prawdą: w oknie ~2 s po starcie serwera middleware nie jest jeszcze podpięte, a zimna trasa API nie zdąży zapisać rekordu w budżecie testu. Po drodze padło pięć hipotez (React kasuje input; brak zębów w asercji; wolna hydratacja; kontencja workerów; dev vs build) — **cztery obalone pomiarem**, każda po rundzie kosztownych przebiegów.
+- **Rule**: When an E2E failure reads exactly like the risk it protects, treat it as a hypothesis, not a finding — environment artifacts mimic risk materialization. Isolate one variable per experiment and measure both sides before changing anything (here: fresh-server 6/8 and 3/4 vs warm-server 10/10 identified cold start and simultaneously killed the worker-count and dev-vs-build hypotheses). Warm-up must cover **every** route the tests touch; a partial warm-up is no warm-up, because the cold route is wherever the first hit lands.
+- **Applies to**: e2e, implement, impl-review

@@ -5,6 +5,11 @@ import { STORAGE_STATE } from "./e2e/helpers/test-user";
 const BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:4321";
 const PORT = new URL(BASE_URL).port || "4321";
 
+// Domyślnie suite idzie przeciw ZBUDOWANEJ aplikacji. `E2E_DEV=1` przełącza na
+// dev server — szybsza pętla przy pisaniu testów, ale patrz komentarz przy
+// `webServer` na temat tego, co ta wygoda kosztuje.
+const USE_DEV_SERVER = process.env.E2E_DEV === "1";
+
 export default defineConfig({
   testDir: "./e2e",
   // Testy muszą być niezależne — równoległość jest tu regułą wymuszającą, nie
@@ -44,20 +49,33 @@ export default defineConfig({
     },
   ],
 
+  // Dlaczego domyślnie build+preview, a nie `astro dev`.
+  //
+  // `astro dev` kompiluje trasy, middleware i bundle wysp DOPIERO na żądanie.
+  // To dało trzy niezależne, przerywane awarie, żadną niezwiązaną z badanymi
+  // ryzykami: (1) anonim dosięgał /library w oknie ~2 s, zanim middleware
+  // zostało podpięte; (2) hydratacja przekraczała budżet pod kontencją dwóch
+  // workerów; (3) pierwsze trafienie w trasę API kosztowało 2,4 s. Zmierzone
+  // na dev serverze: 6 zielonych / 2 czerwone z 8 zimnych przebiegów.
+  //
+  // Przeciw zbudowanej aplikacji nie ma czego kompilować w trakcie testów, więc
+  // cała ta klasa znika u źródła. Koszt: build przed przebiegiem. To bramka
+  // uruchamiana przed merge, nie przy każdej edycji — ten koszt jest do
+  // przyjęcia, a niestabilny suite nie jest.
+  //
+  // `E2E_DEV=1` wraca na dev server (szybsza pętla przy PISANIU testów).
+  // Nie ufaj wtedy pojedynczej zieleni ani pojedynczej czerwieni.
   webServer: {
-    // Port jawnie z BASE_URL — inaczej `astro dev` wstaje na 4321 niezależnie
-    // od tego, na co celuje Playwright.
-    command: `npm run dev -- --port ${PORT}`,
+    // Port jawnie z BASE_URL — inaczej serwer wstaje na 4321 niezależnie od
+    // tego, na co celuje Playwright.
+    command: USE_DEV_SERVER ? `npm run dev -- --port ${PORT}` : `npm run build && npm run preview -- --port ${PORT}`,
     url: BASE_URL,
-    // Lokalnie podłącz się do już działającego `npm run dev`; na CI zawsze
-    // startuj własny, żeby przebieg nie zależał od cudzego procesu.
-    //
-    // UWAGA przy weryfikacji przez celowe psucie: cudzy dev server (np. z innej
-    // sesji) potrafi trzymać stary moduł `src/middleware.ts` i wtedy zepsucie
-    // nie dociera do aplikacji — test zostaje zielony i fałszywie wygląda na
-    // pozbawiony zębów. Wymuś wtedy świeży proces na osobnym porcie:
-    //   $env:E2E_BASE_URL="http://localhost:4322"; npx playwright test
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    // Przy buildzie NIGDY nie podłączaj się do cudzego procesu: zastany serwer
+    // serwuje starą kompilację, więc zmiany w kodzie po cichu nie docierają do
+    // testów. Przejechaliśmy to na dev serverze z innej sesji — celowe psucie
+    // `src/middleware.ts` nie dotarło do aplikacji, test został zielony i
+    // fałszywie wyglądał na pozbawiony zębów.
+    reuseExistingServer: USE_DEV_SERVER && !process.env.CI,
+    timeout: 300_000,
   },
 });
