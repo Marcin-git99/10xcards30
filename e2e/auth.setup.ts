@@ -1,6 +1,6 @@
 import { test as setup, expect, request as playwrightRequest } from "@playwright/test";
 import { waitForIslandsHydrated } from "./helpers/island";
-import { STORAGE_STATE, createTestUser, saveTestUser, sessionCookies } from "./helpers/test-user";
+import { STORAGE_STATE, authenticatedClient, createTestUser, saveTestUser, sessionCookies } from "./helpers/test-user";
 
 /**
  * Projekt `setup` — wykonuje się raz przed resztą suite'u (zależność w
@@ -22,23 +22,33 @@ setup("authenticate", async ({ context, page, baseURL }) => {
   // w tym oknie widziały anonima na chronionym ekranie i zgłaszały
   // materializację Ryzyka 3, której nie było.
   //
-  // Czekamy na POPRAWNOŚĆ PROTOKOŁU, nie na konkretny kod. W oknie startowym
-  // serwer zwracał status `0` — odpowiedź, która nie jest prawidłowym HTTP.
-  // Każdy prawidłowy status oznacza, że okno się zamknęło.
+  // Sondujemy `/dashboard`, a NIE `/library`, i czekamy właśnie na `302`.
   //
-  // Świadomie NIE sprawdzamy tu `302`, mimo że to kusi: sonda pilnowałaby
-  // wtedy tego samego, co `e2e/auth-gate.spec.ts`, więc osłabienie
-  // `PROTECTED_ROUTES` wywracałoby setup zamiast jednego testu — a `lessons.md`
-  // wymaga mutacji zabijającej dokładnie jeden test. To warunek wstępny
-  // ŚRODOWISKA; o Ryzyku 3 orzeka wyłącznie auth-gate.spec.ts.
+  // Dlaczego akurat tak. Słabszy warunek („jakikolwiek prawidłowy status")
+  // nie wystarcza: w oknie startowym `/library` potrafi zwrócić `200`, czyli
+  // stronę wyrenderowaną bez middleware — sonda przyjęłaby jako „gotowe"
+  // dokładnie ten stan, który jest awarią.
+  //
+  // Dlaczego to nie duplikuje `auth-gate.spec.ts`: obie trasy chroni to samo
+  // middleware, ale mutacja użyta przy celowym psuciu Ryzyka 3 osłabia bramkę
+  // dla `/library` i zostawia `/dashboard` nietknięte. Sonda dowodzi więc, że
+  // middleware ŻYJE, nie orzekając o konfiguracji trasy pod testem — mutacja
+  // nadal zabija dokładnie jeden test, jak wymaga `lessons.md`.
   const probe = await playwrightRequest.newContext({ baseURL: origin });
   try {
     await expect
-      .poll(async () => (await probe.get("/library", { maxRedirects: 0 })).status(), {
+      .poll(async () => (await probe.get("/dashboard", { maxRedirects: 0 })).status(), {
         timeout: 90_000,
-        message: "dev server nie zwraca jeszcze prawidłowych odpowiedzi HTTP dla /library",
+        message:
+          "middleware nie odbija jeszcze anonimowych żądań z /dashboard — serwer zimny albo bramka auth rozkonfigurowana",
       })
-      .toBeGreaterThanOrEqual(200);
+      .toBe(302);
+
+    // Rozgrzewka pozostałych tras anonimowych, na które wchodzi
+    // `auth-gate.spec.ts`: odbicie z /library i strona docelowa odbicia.
+    // Sonda wyżej pilnuje /dashboard, więc te dwie trzeba rozgrzać osobno.
+    await probe.get("/library", { maxRedirects: 0 });
+    await probe.get("/auth/signin");
   } finally {
     await probe.dispose();
   }
@@ -68,6 +78,22 @@ setup("authenticate", async ({ context, page, baseURL }) => {
   await page.goto("/library");
   await expect(page.getByRole("heading", { name: /Moje fiszki/ })).toBeVisible();
   await waitForIslandsHydrated(page, 90_000);
+
+  // Rozgrzewka trasy API. `page.request` dziedziczy ciasteczka kontekstu, więc
+  // to jest ta sama, uwierzytelniona ścieżka, którą idzie `CreateCardForm`.
+  // Pierwsze trafienie w zimną trasę kosztowało tyle, że fiszka nie zdążyła
+  // pojawić się na liście w budżecie testu — objaw „element(s) not found",
+  // wyglądający na utratę danych, a będący kosztem zimnego startu.
+  const warmupQuestion = `E2E warmup ${Date.now()}`;
+  const warmup = await page.request.post("/api/cards", {
+    data: { question: warmupQuestion, answer: "rozgrzewka" },
+  });
+  expect(warmup.status(), "rozgrzewka POST /api/cards").toBe(201);
+
+  // Fiszka rozgrzewkowa nie może zostać — testy asertują na zawartość list.
+  const cleaner = await authenticatedClient(user);
+  const { error: cleanupError } = await cleaner.from("cards").delete().like("question", "E2E warmup %");
+  expect(cleanupError?.message, "sprzątanie fiszki rozgrzewkowej").toBeUndefined();
 
   await context.storageState({ path: STORAGE_STATE });
 });
