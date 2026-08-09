@@ -28,6 +28,12 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
+# playwright — stan sesji E2E zawiera zywy token, nigdy do repozytorium
+playwright/.auth/
+playwright-report/
+test-results/
+blob-report/
+
 # course tooling — keep local, never publish to remote
 .claude/skills/
 .claude/prompts/
