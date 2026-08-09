@@ -19,6 +19,14 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : [["list"]],
 
+  // Bramka gotowości serwera. Uruchamia się PO starcie `webServer`, a PRZED
+  // projektem `setup` — czyli w jedynym punkcie, w którym da się odrzucić
+  // serwer, zanim zobaczy go pierwszy test. To ona domyka klasę awarii
+  // opisaną niżej przy `webServer` (test-plan.md §6.7); `webServer` sam w
+  // sobie czeka tylko na pierwszą odpowiedź z `/`, co jest za słabym
+  // warunkiem.
+  globalSetup: "./e2e/global-setup.ts",
+
   // Dev server Astro kompiluje trasy na żądanie, a `webServer` czeka tylko na
   // odpowiedź z `/` — więc pierwszy przebieg po zmianie kodu płaci za
   // kompilację `/dashboard`, `/library` i `/auth/signin` w trakcie testów.

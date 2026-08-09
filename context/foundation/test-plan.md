@@ -6,7 +6,8 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-08-09 (warstwa E2E: §4 stack, §5 bramka, §6.7 wzorzec)
+> Last updated: 2026-08-09 (warstwa E2E: §4 stack, §5 bramka, §6.7 wzorzec;
+> bramka gotowości + E2E wpięte w CI jako blokujące)
 
 ## 1. Strategy
 
@@ -162,7 +163,7 @@ wylądowaniu tej fazy rolloutu; wcześniej ma status planowanej.
 | build                                   | CI                       | wymagana (od §3 Phase 1)       | błędy kompilacji i konfiguracji                                         |
 | testy hermetyczne (`test:hermetic`)     | lokalnie + CI            | wymagana (od §3 Phase 1)       | regresje logiki niewymagające bazy, wyciek sekretu                      |
 | testy integracyjne (`test:integration`) | lokalnie, ad hoc         | wymagana przed merge (poza CI) | regresje reguł bazy — RLS, constrainty, schemat                         |
-| testy E2E (`test:e2e`)                  | lokalnie, ad hoc         | zalecana przed merge           | regresje na ścieżce przeglądarka → ciasteczka → middleware → SSR → baza |
+| testy E2E (`test:e2e`)                  | lokalnie + CI            | wymagana (od 2026-08-09)       | regresje na ścieżce przeglądarka → ciasteczka → middleware → SSR → baza |
 | pre-commit (husky + lint-staged)        | lokalnie                 | wymagana                       | formatowanie i podstawowy lint na plikach w commicie                    |
 | ręczny smoke na wdrożonym środowisku    | między merge a produkcją | zalecana                       | awarie specyficzne dla runtime'u edge (Ryzyko 1)                        |
 
@@ -397,12 +398,19 @@ Rozstrzygający był ostatni wiersz: pięć przebiegów na jednym workerze i pi�
 dwóch, wszystkie zielone. To obaliło naraz hipotezę o równoległości (workers) i
 o trybie serwera (dev vs build) — koreluje **wyłącznie** świeżość procesu.
 
-Praktyczny wniosek: **rozgrzewka w `e2e/auth.setup.ts` musi obejmować każdą
-trasę, której dotykają testy.** Niekompletna rozgrzewka to nie połowa
+Praktyczny wniosek: **każda trasa, której dotykają testy, musi być rozgrzana i
+sprawdzona, zanim ruszy pierwszy test.** Niekompletna rozgrzewka to nie połowa
 zabezpieczenia, tylko brak zabezpieczenia — zimna zostaje ta trasa, na której
-akurat wypadnie pierwsze trafienie. Dziś rozgrzewane są: `/library` anonimowo
-(sonda), `/auth/signin`, `/dashboard` z hydratacją, `/library` z hydratacją oraz
-`POST /api/cards`. Dokładając test dotykający nowej trasy, **dopisz ją tutaj**.
+akurat wypadnie pierwsze trafienie. Odpowiedzialność jest podzielona na dwie
+warstwy; dokładając test dotykający nowej trasy, **dopisz ją w tej, która jej
+dotyczy**:
+
+- `e2e/global-setup.ts` — warstwa HTTP, anonimowo: `/`, `/auth/signin`,
+  `/dashboard`, `/library`, `POST /api/cards`. Nie tylko rozgrzewa, ale
+  **sprawdza kontrakt**: dokładny status, nie „jakikolwiek prawidłowy".
+- `e2e/auth.setup.ts` — to, czego nie da się rozgrzać bez sesji i bez
+  przeglądarki: hydratacja wysp na `/dashboard` i `/library` oraz
+  uwierzytelniony `POST /api/cards`.
 
 Objawy zimnego startu bywają mylące i wyglądają jak materializacja ryzyka:
 anonim dosięgający `/library` (pięć pierwszych żądań zwraca status `0`, czyli
@@ -432,30 +440,63 @@ pozbawiony zębów; ujawniło to jedno żądanie HTTP obok Playwrighta. Z tego s
 powodu `reuseExistingServer` jest **wyłączone** w trybie buildu — zastany proces
 serwuje starą kompilację.
 
-**E2E nie jest jeszcze wpięte w CI.** `.github/workflows/ci.yml` nie uruchamia
-`test:e2e` — bramka z §5 jest dziś lokalna i ad hoc.
+**Bramka gotowości zamiast długu zimnego startu (2026-08-09).**
+`e2e/global-setup.ts` odpytuje każdą trasę z listy wyżej i dopuszcza testy
+dopiero po **trzech przejściach z rzędu, w których KAŻDA trasa dotrzymała
+swojego kontraktu**; pojedyncze potknięcie zeruje licznik, a nie cofa go o
+jeden. Playwright uruchamia `globalSetup` po starcie `webServer`, a przed
+projektem `setup` — to jedyny punkt, w którym da się odrzucić serwer, zanim
+zobaczy go pierwszy test. Budżet (domyślnie 120 s, `E2E_READY_TIMEOUT_MS`)
+ogranicza wyłącznie cierpliwość: pętla kończy się w momencie osiągnięcia stanu.
 
-**⚠️ ZNANY DŁUG: ~25% czerwieni przy zimnym starcie serwera.** Świadomie
-przyjęty 2026-08-09, nie przeoczony. Stan faktyczny:
+Co zmierzono przy domykaniu — build+preview, świeży serwer na każdy przebieg,
+ta sama maszyna, jeden dzień:
 
-- Awaria **nie leży w asercjach**. Oba testy przeszły celowe psucie — padają,
-  gdy zepsuć chronione zachowanie, i to zweryfikowano po każdej przebudowie.
-- Przyczyna jest zidentyfikowana i zawężona do jednej: zimny start procesu
-  serwera (patrz tabela pomiarów wyżej). Rozgrzewka w `auth.setup.ts` zbija
-  częstość, ale jej nie zeruje.
-- **Obejście jest znane i zmierzone**: przeciw rozgrzanemu serwerowi 10/10.
-  Uruchamiając suite kilkukrotnie, wystartuj serwer raz i celuj w niego
-  (`E2E_DEV=1` plus ręcznie odpalony `npm run preview -- --port N`).
+| Warunek                                     | Wynik   |
+| ------------------------------------------- | ------- |
+| kod sprzed bramki (`e832c5e`), 6 przebiegów | 6 / 6   |
+| z bramką gotowości, 10 przebiegów           | 10 / 10 |
 
-Dlaczego przyjęte, a nie domknięte: to bramka lokalna, uruchamiana ad hoc przed
-merge, a nie automat blokujący pipeline — koszt fałszywej czerwieni ponosi
-człowiek, który i tak patrzy na wynik. Pogoń za resztą weszła w fazę malejących
-zwrotów (pięć hipotez, cztery obalone pomiarem).
+**Uczciwie o tym, czego NIE udowodniono.** Czerwieni nie udało się odtworzyć ani
+razu — również na kodzie sprzed zmiany. Deklarowane wcześniej ~25% pochodzi z
+pomiarów sprzed pełnej rozgrzewki dodanej w `a55cc0c`; dziś ta liczba jest
+nieaktualna, a 10/10 z bramką **nie dowodzi różnicy**, skoro baseline też był
+zielony. Bramka nie wchodzi więc na podstawie zmierzonego spadku flake'u, tylko
+dlatego, że zamienia założenie („`webServer` dostał odpowiedź, czyli jest
+gotowe") w sprawdzany warunek wstępny. Raport bramki drukuje przy każdym
+przebiegu licznik `odrzucono N` — gdyby okno zimnego startu wróciło, będzie
+widać, że zostało pochłonięte tutaj, a nie w teście.
 
-**Ten dług musi zostać domknięty PRZED wpięciem E2E do CI.** Tam fałszywa
-czerwień blokuje merge i uczy zespół ignorować czerwone przebiegi, co jest
-gorsze niż brak testu. Kandydat na rozwiązanie: `globalSetup` odpytujący każdą
-trasę aż do stabilnych odpowiedzi, zanim Playwright dopuści projekt `setup`.
+Co jest zweryfikowane wprost, **celowym psuciem**: po osłabieniu
+`PROTECTED_ROUTES` w `src/middleware.ts` (usunięcie `/library`) bramka
+zatrzymała przebieg komunikatem `GET /library — oczekiwano 302, widziano:
+23× 200`, zanim ruszył którykolwiek test. To jest realny zysk niezależny od
+statystyki: ten sam objaw, który wcześniej wracał jako czerwony
+`auth-gate.spec.ts` i wyglądał na materializację Ryzyka 3, dziś wraca jako
+jednoznaczne „serwer albo bramka auth nie jest gotowa", ze wskazaniem trasy.
+
+**E2E jest wpięte w CI jako bramka blokująca** — `.github/workflows/ci.yml`,
+job `e2e`. Cztery rzeczy, które trzeba wiedzieć, zanim się go ruszy:
+
+- **Osobny job, nie krok w `ci`.** `ci` buduje artefakt sekretami
+  produkcyjnymi, a E2E musi zbudować aplikację przeciw Supabase stojącemu na
+  runnerze — inaczej guard z `e2e/helpers/env.ts` słusznie ubije przebieg. Dwa
+  buildy w jednym jobie kłóciłyby się o `dist/`.
+- **Supabase z `supabase start`**, nie z usług w kontenerach: ten sam
+  `config.toml`, te same migracje, `enable_confirmations = false` prosto z
+  pliku. `SUPABASE_URL`/`SUPABASE_KEY` pochodzą z `supabase status -o json`, nie
+  z sekretów repozytorium — muszą wskazywać localhost runnera.
+- **Provider Google gaszony na runnerze.** W repozytorium stoi `enabled = true`
+  przy pustym `client_id` (prawdziwy ID żyje wyłącznie w niezacommitowanej
+  kopii), a przy pustym ID CLI nie wystawi stacka. Suite nie dotyka Google ani
+  razu, więc krok patchuje ten jeden blok — i pada głośno, gdyby sekcja
+  zmieniła kształt, zamiast po cichu nie zrobić nic.
+- **`.dev.vars` na runnerze jest OBOWIĄZKOWE.** `astro preview` idzie przez
+  workerd, a worker nie dziedziczy `process.env`: widzi tylko bindingi, które
+  adapter Cloudflare kopiuje z tego pliku do `dist/server/`. Zweryfikowane
+  eksperymentalnie — z samymi zmiennymi w powłoce aplikacja wstaje bez
+  konfiguracji Supabase i suite pada w `auth.setup.ts` na asercji o sesji, czyli
+  awarią wyglądającą na regresję sesji, a będącą brakiem konfiguracji.
 
 ## 7. What We Deliberately Don't Test
 
@@ -484,7 +525,7 @@ podstaw założenie.
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-08-09 (§4 e2e: kandydat → Playwright 1.62.1; §5: bramka `test:e2e`)
+- Strategy (§1–§5) last reviewed: 2026-08-09 (§4 e2e: kandydat → Playwright 1.62.1; §5: bramka `test:e2e` — lokalnie + CI, blokująca)
 - Stack versions last verified: 2026-08-09
 - AI-native tool references last verified: 2026-08-02
 
