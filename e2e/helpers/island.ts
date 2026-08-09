@@ -21,9 +21,13 @@ import type { Page } from "@playwright/test";
  * runtime'u Astro (atrybut `ssr` znika po hydratacji), nie struktura DOM
  * naszych komponentów. To czekanie na STAN, nie na czas — żadnego
  * `waitForTimeout`.
+ *
+ * Budżet: domyślne 15 s wystarcza na **rozgrzanym** serwerze. Zimna
+ * kompilacja bundle'a wyspy przez Vite trwa dłużej i przy kilku workerach
+ * walczących o ten sam dev server przekraczała ten limit — dlatego płaci za
+ * nią raz projekt `setup` (`e2e/auth.setup.ts`), z hojniejszym budżetem.
+ * Dzięki temu limit w samych testach może zostać ciasny i wiarygodny.
  */
-export async function waitForIslandsHydrated(page: Page): Promise<void> {
-  await page.waitForFunction(() => document.querySelectorAll("astro-island[ssr]").length === 0, null, {
-    timeout: 15_000,
-  });
+export async function waitForIslandsHydrated(page: Page, timeout = 15_000): Promise<void> {
+  await page.waitForFunction(() => document.querySelectorAll("astro-island[ssr]").length === 0, null, { timeout });
 }
