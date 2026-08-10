@@ -1,8 +1,26 @@
-# 10x Astro Starter
+# 10xCards
 
-![](./public/template.png)
+Turn a pasted fragment of documentation into flashcards, then retain it with spaced repetition — without spending more time writing cards than learning.
 
-A modern, opinionated starter template for building fast, accessible web applications.
+## The problem
+
+Writing good flashcards is cognitive work made of three separate acts: deciding what is worth capturing, phrasing the question, and phrasing the answer. All three burn the same intellectual energy that should go into learning. A developer picking up a new stack hits this at the worst possible moment — right after reading the docs, knowing they should make cards, with no appetite for 45 minutes of transcription. The direct cost is 2–3× more time spent authoring cards than studying; the indirect cost is faster forgetting.
+
+Strong language models exist. Proven spaced-repetition algorithms exist. Nobody has joined them into one workflow — today you juggle a chat assistant and a separate review app, and that friction kills the habit. **10xCards is the join**: from pasted text to an active study session in under two minutes.
+
+The target user is a developer (junior or senior) learning a new framework, language, or ecosystem. See [`context/foundation/prd.md`](context/foundation/prd.md) for the full product definition — personas, 9 user stories, 28 functional requirements, success criteria and guardrails.
+
+## Implementation status
+
+This is an MVP under active development. What works today:
+
+- **Sign-in via Google OAuth** — no password flow; sessions are cookie-based and resolved server-side on every request.
+- **Personal flashcard library** — create, browse, edit and delete your own cards. Ownership is enforced in the database by row-level security, not only in application code.
+- **Leitner-light scheduler** — the review-scheduling rule (`src/lib/services/review-schedule.ts`) is implemented and covered by tests against the requirements in the PRD.
+
+Not yet built: AI generation of card batches, and the review-session UI that consumes the scheduler. Both are sequenced in [`context/foundation/roadmap.md`](context/foundation/roadmap.md).
+
+Testing strategy and the risk register that drives it live in [`context/foundation/test-plan.md`](context/foundation/test-plan.md).
 
 ## Tech Stack
 
