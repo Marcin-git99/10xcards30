@@ -580,24 +580,24 @@ No database migration in this plan — see "What We're NOT Doing."
 
 #### Automated
 
-- [x] 1.1 `npm run lint` passes
-- [x] 1.2 `npx astro check` passes
-- [x] 1.3 New hermetic test file `test/hermetic/openrouter-client.test.ts` covers success/401/429-retry/429-exhausted/timeout/protocol-error paths
-- [x] 1.4 `npm run test:hermetic` passes
+- [x] 1.1 `npm run lint` passes — c020582
+- [x] 1.2 `npx astro check` passes — c020582
+- [x] 1.3 New hermetic test file `test/hermetic/openrouter-client.test.ts` covers success/401/429-retry/429-exhausted/timeout/protocol-error paths — c020582
+- [x] 1.4 `npm run test:hermetic` passes — c020582
 
 #### Manual
 
-- [x] 1.5 Real `OPENROUTER_API_KEY` sanity call to `requestChatCompletion` returns real model output
+- [x] 1.5 Real `OPENROUTER_API_KEY` sanity call to `requestChatCompletion` returns real model output — c020582
 
 ### Phase 2: Generation service
 
 #### Automated
 
-- [ ] 2.1 `npm run lint` passes
-- [ ] 2.2 `npx astro check` passes
-- [ ] 2.3 New hermetic test file `test/hermetic/generation-parsing.test.ts` covers valid/regex-fallback/wrong-count/empty-field/oversize/garbage cases
-- [ ] 2.4 New hermetic test file `test/hermetic/generation-service.test.ts` covers success, OpenRouterError propagation with no insert, GenerationValidationError propagation with no insert
-- [ ] 2.5 `npm run test:hermetic` passes
+- [x] 2.1 `npm run lint` passes
+- [x] 2.2 `npx astro check` passes
+- [x] 2.3 New hermetic test file `test/hermetic/generation-parsing.test.ts` covers valid/regex-fallback/wrong-count/empty-field/oversize/garbage cases
+- [x] 2.4 New hermetic test file `test/hermetic/generation-service.test.ts` covers success, OpenRouterError propagation with no insert, GenerationValidationError propagation with no insert
+- [x] 2.5 `npm run test:hermetic` passes
 
 ### Phase 3: API routes
 
