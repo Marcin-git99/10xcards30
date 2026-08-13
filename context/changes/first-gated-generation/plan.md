@@ -593,25 +593,25 @@ No database migration in this plan — see "What We're NOT Doing."
 
 #### Automated
 
-- [x] 2.1 `npm run lint` passes
-- [x] 2.2 `npx astro check` passes
-- [x] 2.3 New hermetic test file `test/hermetic/generation-parsing.test.ts` covers valid/regex-fallback/wrong-count/empty-field/oversize/garbage cases
-- [x] 2.4 New hermetic test file `test/hermetic/generation-service.test.ts` covers success, OpenRouterError propagation with no insert, GenerationValidationError propagation with no insert
-- [x] 2.5 `npm run test:hermetic` passes
+- [x] 2.1 `npm run lint` passes — d49bbb5
+- [x] 2.2 `npx astro check` passes — d49bbb5
+- [x] 2.3 New hermetic test file `test/hermetic/generation-parsing.test.ts` covers valid/regex-fallback/wrong-count/empty-field/oversize/garbage cases — d49bbb5
+- [x] 2.4 New hermetic test file `test/hermetic/generation-service.test.ts` covers success, OpenRouterError propagation with no insert, GenerationValidationError propagation with no insert — d49bbb5
+- [x] 2.5 `npm run test:hermetic` passes — d49bbb5
 
 ### Phase 3: API routes
 
 #### Automated
 
-- [ ] 3.1 `npm run lint` passes
-- [ ] 3.2 `npx astro check` passes
-- [ ] 3.3 New hermetic test file `test/hermetic/generations-route.test.ts` covers auth/parse/length/missing-key/error-mapping/success
-- [ ] 3.4 New hermetic test file `test/hermetic/generations-approve-route.test.ts` covers auth/param/body-limits/not-found/db-error/success
-- [ ] 3.5 `npm run test:hermetic` passes
+- [x] 3.1 `npm run lint` passes
+- [x] 3.2 `npx astro check` passes
+- [x] 3.3 New hermetic test file `test/hermetic/generations-route.test.ts` covers auth/parse/length/missing-key/error-mapping/success
+- [x] 3.4 New hermetic test file `test/hermetic/generations-approve-route.test.ts` covers auth/param/body-limits/not-found/db-error/success
+- [x] 3.5 `npm run test:hermetic` passes
 
 #### Manual
 
-- [ ] 3.6 Real curl/REST round-trip: generate returns 5 real candidates, approve persists edited subset with correct `source`/`generation_id`, foreign `generation_id` returns 404
+- [x] 3.6 Real curl/REST round-trip: generate returns 5 real candidates, approve persists edited subset with correct `source`/`generation_id`, foreign `generation_id` returns 404
 
 ### Phase 4: Frontend
 
