@@ -617,27 +617,27 @@ No database migration in this plan — see "What We're NOT Doing."
 
 #### Automated
 
-- [x] 4.1 `npm run lint` passes
-- [x] 4.2 `npx astro check` passes
-- [x] 4.3 `npm run test:hermetic` passes (no regressions)
+- [x] 4.1 `npm run lint` passes — ad6655b
+- [x] 4.2 `npx astro check` passes — ad6655b
+- [x] 4.3 `npm run test:hermetic` passes (no regressions) — ad6655b
 
 #### Manual
 
-- [x] 4.4 Paste <500 chars: button disabled, counter shows shortfall
-- [x] 4.5 Valid paste + generate: form blocks, spinner shows, Sign out stays clickable
-- [x] 4.6 Successful generation → edit → remove → approve → `/library` banner "4 nowych fiszek..." → refresh clears banner
-- [x] 4.7 Forced server error shows friendly message + working [Spróbuj ponownie]
+- [x] 4.4 Paste <500 chars: button disabled, counter shows shortfall — ad6655b
+- [x] 4.5 Valid paste + generate: form blocks, spinner shows, Sign out stays clickable — ad6655b
+- [x] 4.6 Successful generation → edit → remove → approve → `/library` banner "4 nowych fiszek..." → refresh clears banner — ad6655b
+- [x] 4.7 Forced server error shows friendly message + working [Spróbuj ponownie] — ad6655b
 
 ### Phase 5: E2E + manual integration pass
 
 #### Automated
 
-- [ ] 5.1 `npm run test:e2e` passes locally (E2E_DEV=1)
-- [ ] 5.2 `npm run test:e2e` passes against built app
+- [x] 5.1 `npm run test:e2e` passes locally (E2E_DEV=1)
+- [x] 5.2 `npm run test:e2e` passes against built app
 - [ ] 5.3 CI `E2E (Playwright)` job green
 
 #### Manual
 
-- [ ] 5.4 Real OPENROUTER_API_KEY full browser walkthrough persists real cards with correct source/generation_id
-- [ ] 5.5 Real error path (invalid key) shows friendly 503 error end-to-end in browser
+- [x] 5.4 Real OPENROUTER_API_KEY full browser walkthrough persists real cards with correct source/generation_id
+- [x] 5.5 Real error path (invalid key) shows friendly 503 error end-to-end in browser
       </content>
