@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Library, Plus, Sparkles, PencilLine, Pencil, Trash2, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Card } from "@/types";
@@ -6,6 +6,7 @@ import type { Card } from "@/types";
 interface Props {
   initialCards: Card[];
   loadError?: boolean;
+  generatedCount?: number;
 }
 
 /**
@@ -35,13 +36,22 @@ function SourceBadge({ source }: { source: Card["source"] }) {
 const actionButton =
   "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
 
-export default function LibraryView({ initialCards, loadError = false }: Props) {
+export default function LibraryView({ initialCards, loadError = false, generatedCount = 0 }: Props) {
   const [cards, setCards] = useState<Card[]>(initialCards);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState({ question: "", answer: "" });
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showGeneratedBanner, setShowGeneratedBanner] = useState(generatedCount > 0);
+
+  // Strip `?generated=N` po zamontowaniu, żeby odświeżenie strony nie
+  // pokazało banera ponownie — bez round-tripu do serwera.
+  useEffect(() => {
+    if (generatedCount > 0) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, [generatedCount]);
 
   /**
    * Jedno miejsce na odczyt błędu, żeby każdy handler tak samo radził sobie
@@ -154,6 +164,28 @@ export default function LibraryView({ initialCards, loadError = false }: Props) 
           Nowa fiszka
         </button>
       </div>
+
+      {showGeneratedBanner && (
+        <div
+          role="status"
+          className="flex items-center justify-between gap-3 rounded-xl border border-green-400/30 bg-green-500/10 p-4 text-sm text-green-200"
+        >
+          <span className="flex items-center gap-2">
+            <Sparkles className="size-4" />
+            {generatedCount} {generatedCount === 1 ? "nowa fiszka gotowa" : "nowych fiszek gotowych"} do nauki
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setShowGeneratedBanner(false);
+            }}
+            title="Zamknij"
+            className="rounded-lg p-1 text-green-200 transition-colors hover:bg-green-500/20"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+      )}
 
       {error && (
         <p role="alert" className="rounded-xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">

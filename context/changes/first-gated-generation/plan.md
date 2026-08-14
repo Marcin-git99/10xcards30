@@ -603,30 +603,30 @@ No database migration in this plan — see "What We're NOT Doing."
 
 #### Automated
 
-- [x] 3.1 `npm run lint` passes
-- [x] 3.2 `npx astro check` passes
-- [x] 3.3 New hermetic test file `test/hermetic/generations-route.test.ts` covers auth/parse/length/missing-key/error-mapping/success
-- [x] 3.4 New hermetic test file `test/hermetic/generations-approve-route.test.ts` covers auth/param/body-limits/not-found/db-error/success
-- [x] 3.5 `npm run test:hermetic` passes
+- [x] 3.1 `npm run lint` passes — 731171a
+- [x] 3.2 `npx astro check` passes — 731171a
+- [x] 3.3 New hermetic test file `test/hermetic/generations-route.test.ts` covers auth/parse/length/missing-key/error-mapping/success — 731171a
+- [x] 3.4 New hermetic test file `test/hermetic/generations-approve-route.test.ts` covers auth/param/body-limits/not-found/db-error/success — 731171a
+- [x] 3.5 `npm run test:hermetic` passes — 731171a
 
 #### Manual
 
-- [x] 3.6 Real curl/REST round-trip: generate returns 5 real candidates, approve persists edited subset with correct `source`/`generation_id`, foreign `generation_id` returns 404
+- [x] 3.6 Real curl/REST round-trip: generate returns 5 real candidates, approve persists edited subset with correct `source`/`generation_id`, foreign `generation_id` returns 404 — 731171a
 
 ### Phase 4: Frontend
 
 #### Automated
 
-- [ ] 4.1 `npm run lint` passes
-- [ ] 4.2 `npx astro check` passes
-- [ ] 4.3 `npm run test:hermetic` passes (no regressions)
+- [x] 4.1 `npm run lint` passes
+- [x] 4.2 `npx astro check` passes
+- [x] 4.3 `npm run test:hermetic` passes (no regressions)
 
 #### Manual
 
-- [ ] 4.4 Paste <500 chars: button disabled, counter shows shortfall
-- [ ] 4.5 Valid paste + generate: form blocks, spinner shows, Sign out stays clickable
-- [ ] 4.6 Successful generation → edit → remove → approve → `/library` banner "4 nowych fiszek..." → refresh clears banner
-- [ ] 4.7 Forced server error shows friendly message + working [Spróbuj ponownie]
+- [x] 4.4 Paste <500 chars: button disabled, counter shows shortfall
+- [x] 4.5 Valid paste + generate: form blocks, spinner shows, Sign out stays clickable
+- [x] 4.6 Successful generation → edit → remove → approve → `/library` banner "4 nowych fiszek..." → refresh clears banner
+- [x] 4.7 Forced server error shows friendly message + working [Spróbuj ponownie]
 
 ### Phase 5: E2E + manual integration pass
 

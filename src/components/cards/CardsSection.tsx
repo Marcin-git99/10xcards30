@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Layers } from "lucide-react";
+import GenerationSection from "@/components/cards/GenerationSection";
 import CreateCardForm from "@/components/cards/CreateCardForm";
 import type { Card } from "@/types";
 
@@ -16,6 +17,8 @@ export default function CardsSection({ initialCards }: Props) {
 
   return (
     <div className="space-y-6">
+      <GenerationSection />
+
       <div>
         <h2 className="mb-4 text-lg font-semibold text-white">New flashcard</h2>
         <CreateCardForm onCardAdded={handleCardAdded} />

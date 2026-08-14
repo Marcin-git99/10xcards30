@@ -25,13 +25,16 @@ if (supabase) {
 } else {
   loadError = true;
 }
+
+const generatedParam = Number(Astro.url.searchParams.get("generated"));
+const generatedCount = Number.isInteger(generatedParam) && generatedParam > 0 ? generatedParam : 0;
 ---
 
 <Layout title="Moje fiszki">
   <div class="bg-cosmic min-h-screen p-4">
     <div class="mx-auto w-full max-w-2xl space-y-6 py-8">
       <div class="rounded-2xl border border-white/10 bg-white/10 p-8 backdrop-blur-xl">
-        <LibraryView initialCards={initialCards} loadError={loadError} client:load />
+        <LibraryView initialCards={initialCards} loadError={loadError} generatedCount={generatedCount} client:load />
       </div>
     </div>
   </div>
