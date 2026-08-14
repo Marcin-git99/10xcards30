@@ -632,12 +632,11 @@ No database migration in this plan — see "What We're NOT Doing."
 
 #### Automated
 
-- [x] 5.1 `npm run test:e2e` passes locally (E2E_DEV=1)
-- [x] 5.2 `npm run test:e2e` passes against built app
-- [ ] 5.3 CI `E2E (Playwright)` job green
+- [x] 5.1 `npm run test:e2e` passes locally (E2E_DEV=1) — 91d732e
+- [x] 5.2 `npm run test:e2e` passes against built app — 91d732e
+- [x] 5.3 CI `E2E (Playwright)` job green — verified on run 31837726557
 
 #### Manual
 
-- [x] 5.4 Real OPENROUTER_API_KEY full browser walkthrough persists real cards with correct source/generation_id
-- [x] 5.5 Real error path (invalid key) shows friendly 503 error end-to-end in browser
-      </content>
+- [x] 5.4 Real OPENROUTER_API_KEY full browser walkthrough persists real cards with correct source/generation_id — 91d732e
+- [x] 5.5 Real error path (invalid key) shows friendly 503 error end-to-end in browser — 91d732e

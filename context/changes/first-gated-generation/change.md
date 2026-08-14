@@ -1,7 +1,7 @@
 ---
 change_id: first-gated-generation
 title: Generate flashcards from pasted text via OpenRouter, review, and save
-status: implementing
+status: implemented
 created: 2026-08-13
 updated: 2026-08-14
 archived_at: null
